@@ -33,7 +33,7 @@ void Engine::OnLoaded() {
   FilesystemInstance =
       dynamic_cast<IFileSystem*>(GetModuleInfo(result.GetResult())->Module);
 
-  FilesystemInstance->SetupGamePath("example");
+  FilesystemInstance->SetupGamePath("minesweeper2D");
 
   if (!IsServer()) {
     auto wind = PlatformInstance->CreateWindow();
@@ -48,6 +48,15 @@ void Engine::OnLoaded() {
     MainWindow->Initialize();
     MainWindow->SetFullscreen(false);
   }
+
+  result = LoadModule(FilesystemInstance->GetPath(
+      "bin/libServer.so", AS_ENGINE_FILE_SYSTEM_GAMEDIR));
+  if (result.Failed()) {
+    QuitOnError(result);
+    return;
+  }
+  FilesystemInstance =
+      dynamic_cast<IFileSystem*>(GetModuleInfo(result.GetResult())->Module);
 
   std::thread tickThread([&]() { OnTick(); });
   tickThread.detach();
