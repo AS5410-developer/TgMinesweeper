@@ -8,6 +8,7 @@
 #define FIELD_CELL_MINE 1
 #define FIELD_CELL_FLAG 2
 #define FIELD_CELL_OPENED 4
+#define FIELD_CELL_IS(x, y) ((x) & (y))
 
 class Field final {
  public:
@@ -18,8 +19,14 @@ class Field final {
   void SetMineCount(unsigned char count) { MineCount = count; }
   void SetSeed(unsigned long long seed) { Seed = seed; }
 
+  unsigned char GetWidth() { return Width; }
+  unsigned char GetHeight() { return Height; }
+  unsigned char GetMineCount() { return MineCount; }
+  unsigned long long GetSeed() { return Seed; }
+
   void Init();
   unsigned char GetCell(unsigned char x, unsigned char y);
+  bool OpenCell(unsigned char x, unsigned char y);
   void Destroy();
 
   virtual ~Field() = default;
