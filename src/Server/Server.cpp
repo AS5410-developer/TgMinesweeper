@@ -15,8 +15,9 @@ void Server::OnLoaded() {
   EngineInstance->GetConsole() << "Server starting..." << EndLine;
   EngineInstance->GetConsole().RegisterConCmd(exitCMD);
 }
+
 void Server::OnRegisterOptions() {}
 void Server::OnUpdate() {}
 void Server::OnTick() {}
-void Server::OnEnabled() { field.Init(); }
-void Server::OnDisabled() { field.Destroy(); }
+void Server::OnEnabled() {}
+void Server::OnDisabled() {}
