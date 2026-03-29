@@ -50,18 +50,26 @@ void Handler(const std::string& text) {
   wrefresh(win);
 }
 
+void Clear(int argc, char** argv) {
+  buffer.clear();
+  SetConsoleLayout(consoleSubwin, buffer);
+  wrefresh(win);
+}
+ConCMD clearCMD("con_clear", Clear, "Clear the console");
+
 void CtrlUI::OnLoaded() {
   buffer.clear();
   UIThread = std::thread(&CtrlUI::UIThreadFunc, this);
   EngineInstance->GetConsole().SetFlushHandler(Handler);
+  EngineInstance->GetConsole().RegisterConCmd(clearCMD);
 }
 void CtrlUI::OnRegisterOptions() {}
 void CtrlUI::OnUpdate() {}
 void CtrlUI::OnTick() {
-  if (!(EngineInstance->GetCurrentTime() % 128)) {
+  /*if (!(EngineInstance->GetCurrentTime() % 128)) {
     EngineInstance->GetConsole()
         << "Tick: " << EngineInstance->GetCurrentTime() << EndLine;
-  }
+  }*/
 }
 void CtrlUI::OnEnabled() {}
 void CtrlUI::OnDisabled() { UIThread.join(); }
@@ -128,9 +136,10 @@ void CtrlUI::UIThreadFunc() {
       mvwgetnstr(win, LINES - 2, 10, commandBuffer, 255);
       noecho();
       curs_set(0);
-      EngineInstance->GetConsole().ExecuteCommand(commandBuffer);
       enteringCommand = false;
       RefreshAll();
+      if (strlen(commandBuffer) <= 0) continue;
+      EngineInstance->GetConsole().ExecuteCommand(commandBuffer);
     }
   }
   Destroy();

@@ -23,6 +23,7 @@ void Console::RegisterConVar(IConVar& convar) {
 void Console::RegisterConCmd(ConCMD& concmd) { Concmds[concmd.Name] = &concmd; }
 
 const IError* Console::ExecuteCommand(const std::string& command) {
+  if (command.empty()) return new ErrorSuccess;
   const char* commandEnd = command.c_str();
   char* oneCommand = new char[512];
   unsigned int size = 0;
@@ -60,7 +61,7 @@ const IError* Console::ExecuteCommand(const std::string& command) {
     IConVar* convar = Convars[std::string(args[0])];
     if (args.size() == 1) {
       *this << convar->Get() << EndLine;
-      return new ErrorSuccess;
+      goto clean;
     }
     std::string value;
     for (size_t i = 1; i < args.size(); i++) {
@@ -68,15 +69,17 @@ const IError* Console::ExecuteCommand(const std::string& command) {
       if (i != args.size() - 1) value.append(" ");
     }
     convar->Set(value);
-    return new ErrorSuccess;
+    goto clean;
   }
   if (Concmds.contains(std::string(args[0]))) {
     ConCMD* concmd = Concmds[std::string(args[0])];
     concmd->Func(args.size(), args.data());
-    return new ErrorSuccess;
+    goto clean;
   }
 
   *this << "Unknown command or convar: " << args[0] << EndLine;
+clean:
+  delete[] oneCommand;
   return new ErrorSuccess;
 }
 const IError* Console::Execute(const std::string& filePath) { return 0; }
