@@ -17,5 +17,5 @@ void Server::OnLoaded() {
 void Server::OnRegisterOptions() {}
 void Server::OnUpdate() {}
 void Server::OnTick() {}
-void Server::OnEnabled() {}
+void Server::OnEnabled() { field.Init(); }
 void Server::OnDisabled() { field.Destroy(); }
