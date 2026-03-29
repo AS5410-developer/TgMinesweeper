@@ -25,6 +25,8 @@ void Engine::OnLoaded() {
 
   ConsoleInstance = Console(this);
 
+  LoadModule("./bin/libCtrlUI.so");
+
   result = LoadModule("./bin/libFileSystem.so");
   if (result.Failed()) {
     QuitOnError(result);
@@ -142,6 +144,13 @@ ModuleID Engine::AddModule(IModule* module) {
   module->OnLoaded();
 
   return info.ID;
+}
+std::vector<ModuleInfo> Engine::GetModules() const {
+  std::vector<ModuleInfo> moduleInfos;
+  for (const auto& [id, info] : Modules) {
+    moduleInfos.push_back(info);
+  }
+  return moduleInfos;
 }
 void Engine::RemoveModule(ModuleID module) {
   if (!Modules.contains(module)) return;

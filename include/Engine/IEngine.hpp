@@ -31,6 +31,7 @@ class ENGINE_EXPORT IEngine : public IModule {
   virtual void QuitOnError(const IError& error) = 0;
 
   virtual ModuleID AddModule(IModule* module) = 0;
+  virtual std::vector<ModuleInfo> GetModules() const = 0;
   virtual void RemoveModule(ModuleID module) = 0;
 
   virtual ResultOrError<ModuleID> LoadModule(const std::string& name) = 0;

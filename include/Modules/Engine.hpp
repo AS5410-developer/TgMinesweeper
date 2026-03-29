@@ -25,6 +25,7 @@ class ENGINE_EXPORT Engine final : public IEngine {
   virtual void QuitOnError(const IError& error) override;
 
   virtual ModuleID AddModule(IModule* module) override;
+  virtual std::vector<ModuleInfo> GetModules() const override;
   virtual void RemoveModule(ModuleID module) override;
 
   virtual ResultOrError<ModuleID> LoadModule(const std::string& name) override;

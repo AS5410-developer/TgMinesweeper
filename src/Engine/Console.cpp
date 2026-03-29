@@ -126,7 +126,7 @@ void Console::Flush() {
   Buffer->StartWorkWithRes([&](void* buffer) {
     if (!buffer) return;
     std::string* Buffer = reinterpret_cast<std::string*>(buffer);
-    std::cout << Buffer->c_str();
+    // std::cout << Buffer->c_str();
     if (Handler) Handler(*Buffer);
     Buffer->clear();
   });
