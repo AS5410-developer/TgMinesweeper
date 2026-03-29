@@ -31,10 +31,10 @@ class ConVar : public IConVar {
 
 template <typename T>
 ConVar<T>::ConVar(const std::string& name, const T& defaultValue,
-                  const std::string& description = "")
+                  const std::string& description)
     : Name(name), Description(description), Value(defaultValue) {
   static_assert(
-      std::is_same<T, double>::value || std::is_same<std::string>::value,
+      std::is_same<T, double>::value || std::is_same<T, std::string>::value,
       "Are you stupid? ONLY DOUBLE OR STRING!");
 }
 

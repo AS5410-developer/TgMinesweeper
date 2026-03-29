@@ -120,7 +120,7 @@ void CtrlUI::UIThreadFunc() {
       EngineInstance->Quit();
       break;
     } else if (key == KEY_F(1)) {
-      // } else if (key == 'k') {
+      //} else if (key == 'k') {
       enteringCommand = true;
       curs_set(1);
       echo();

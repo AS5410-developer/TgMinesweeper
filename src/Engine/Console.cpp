@@ -47,10 +47,11 @@ const IError* Console::ExecuteCommand(const std::string& command) {
       continue;
     }
     if (sem) continue;
-    if (oneCommand[i] == ' ' || oneCommand[i + 1] == 0) {
+    if (oneCommand[i + 1] == ' ' || oneCommand[i + 1] == 0) {
       oneCommand[i + 1] = '\0';
       args.push_back(oneCommand + last);
-      last = i + 1;
+      last = i + 2;
+      ++i;
       continue;
     }
   }
