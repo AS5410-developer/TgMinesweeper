@@ -44,8 +44,6 @@ void SetDefaultWindowLayout(WINDOW* win, WINDOW* modulesSubwin,
 }
 
 void Handler(const std::string& text) {
-  // wclear(win);
-  // wclear(modulesSubwin);
   wclear(consoleSubwin);
   buffer.append(text);
   SetConsoleLayout(consoleSubwin, buffer);
