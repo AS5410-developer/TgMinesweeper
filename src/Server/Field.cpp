@@ -1,4 +1,5 @@
 #include <Modules/Server/Field.hpp>
+#include <Modules/Server/Server.hpp>
 #include <random>
 
 void Field::Init() {
@@ -33,6 +34,17 @@ void Field::Init() {
     }
   }
   Inited = true;
+
+  for (unsigned char x = 0; x < Width; x++) {
+    for (unsigned char y = 0; y < Height; y++) {
+      if (FIELD_CELL_IS(GetCell(x, y), FIELD_CELL_MINE)) {
+        AS::Engine::Server::GetEngine()->GetConsole() << "*";
+      } else {
+        AS::Engine::Server::GetEngine()->GetConsole() << ".";
+      }
+    }
+    AS::Engine::Server::GetEngine()->GetConsole() << AS::Engine::EndLine;
+  }
 }
 bool Field::OpenCell(unsigned char x, unsigned char y) {
   if (!Inited) return false;
