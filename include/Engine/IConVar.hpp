@@ -10,6 +10,8 @@ class IConVar {
  public:
   virtual const std::string GetName() const = 0;
   virtual const std::string GetDescription() const = 0;
+  virtual const std::string Get() const = 0;
+  virtual void Set(const std::string& value) = 0;
 
   virtual ~IConVar() = default;
 };

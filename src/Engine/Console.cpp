@@ -1,3 +1,4 @@
+#include <Base/ErrorSuccess.hpp>
 #include <Modules/Console.hpp>
 #include <format>
 
@@ -21,7 +22,62 @@ void Console::RegisterConVar(IConVar& convar) {
 }
 void Console::RegisterConCmd(ConCMD& concmd) { Concmds[concmd.Name] = &concmd; }
 
-const IError* Console::ExecuteCommand(const std::string& command) { return 0; }
+const IError* Console::ExecuteCommand(const std::string& command) {
+  const char* commandEnd = command.c_str();
+  char* oneCommand = new char[512];
+  unsigned int size = 0;
+  bool sem = 0;
+  while (*commandEnd != 0 && *commandEnd != ';') {
+    if (*commandEnd == '\"') {
+      sem = !sem;
+      continue;
+    }
+    if (sem) continue;
+    oneCommand[size] = *commandEnd;
+    commandEnd++;
+    size++;
+  }
+  oneCommand[size] = '\0';
+  std::vector<char*> args;
+  int last = 0;
+
+  for (unsigned int i = 0; i < size; i++) {
+    if (oneCommand[i] == '\"') {
+      sem = !sem;
+      continue;
+    }
+    if (sem) continue;
+    if (oneCommand[i] == ' ' || oneCommand[i + 1] == 0) {
+      oneCommand[i + 1] = '\0';
+      args.push_back(oneCommand + last);
+      last = i + 1;
+      continue;
+    }
+  }
+
+  if (Convars.contains(std::string(args[0]))) {
+    IConVar* convar = Convars[std::string(args[0])];
+    if (args.size() == 1) {
+      *this << convar->Get() << EndLine;
+      return new ErrorSuccess;
+    }
+    std::string value;
+    for (size_t i = 1; i < args.size(); i++) {
+      value.append(args[i]);
+      if (i != args.size() - 1) value.append(" ");
+    }
+    convar->Set(value);
+    return new ErrorSuccess;
+  }
+  if (Concmds.contains(std::string(args[0]))) {
+    ConCMD* concmd = Concmds[std::string(args[0])];
+    concmd->Func(args.size(), args.data());
+    return new ErrorSuccess;
+  }
+
+  *this << "Unknown command or convar: " << args[0] << EndLine;
+  return new ErrorSuccess;
+}
 const IError* Console::Execute(const std::string& filePath) { return 0; }
 
 IConsole& Console::operator<<(const std::string& text) {

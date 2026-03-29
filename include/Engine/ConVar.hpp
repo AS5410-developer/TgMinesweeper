@@ -18,6 +18,9 @@ class ConVar : public IConVar {
   T GetValue() const;
   void SetValue(const T& newValue);
 
+  virtual const std::string Get() const override;
+  virtual void Set(const std::string& value) override;
+
   virtual ~ConVar() = default;
 
  private:
@@ -50,6 +53,18 @@ T ConVar<T>::GetValue() const {
 template <typename T>
 void ConVar<T>::SetValue(const T& newValue) {
   Value = newValue;
+}
+template <typename T>
+const std::string ConVar<T>::Get() const {
+  return std::to_string(Value);
+}
+template <typename T>
+void ConVar<T>::Set(const std::string& value) {
+  if constexpr (std::is_same_v<T, double>) {
+    Value = std::stod(value);
+  } else if constexpr (std::is_same_v<T, std::string>) {
+    Value = value;
+  }
 }
 
 }  // namespace AS::Engine
