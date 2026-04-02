@@ -51,6 +51,8 @@ void Engine::OnLoaded() {
     MainWindow->SetFullscreen(false);
   }
 
+  LoadModule("./bin/libTgBotAPI.so");
+
   result = LoadModule(FilesystemInstance->GetPath(
       "bin/libServer.so", AS_ENGINE_FILE_SYSTEM_GAMEDIR));
   if (result.Failed()) {

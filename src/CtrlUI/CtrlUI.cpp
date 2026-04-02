@@ -123,12 +123,12 @@ void CtrlUI::UIThreadFunc() {
     int key = wgetch(win);
     if (key == KEY_RESIZE) {
       RefreshAll();
-    } else if (key == KEY_F(10)) {
-      //} else if (key == 'q') {
+      //} else if (key == KEY_F(10)) {
+    } else if (key == 'q') {
       EngineInstance->Quit();
       break;
-    } else if (key == KEY_F(1)) {
-      //} else if (key == 'k') {
+      //} else if (key == KEY_F(1)) {
+    } else if (key == 'k') {
       enteringCommand = true;
       curs_set(1);
       echo();

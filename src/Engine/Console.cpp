@@ -28,15 +28,15 @@ const IError* Console::ExecuteCommand(const std::string& command) {
   char* oneCommand = new char[512];
   unsigned int size = 0;
   bool sem = 0;
-  while (*commandEnd != 0 && *commandEnd != ';') {
+  while (*commandEnd != 0) {
     if (*commandEnd == '\"') {
       sem = !sem;
-      continue;
     }
-    if (sem) continue;
     oneCommand[size] = *commandEnd;
     commandEnd++;
     size++;
+    if (sem) continue;
+    if (*commandEnd == ';') break;
   }
   oneCommand[size] = '\0';
   std::vector<char*> args;

@@ -13,11 +13,11 @@ class ENGINE_EXPORT IBotAPI : public IModule {
  public:
   virtual void SetToken(const char* token) = 0;
 
-  virtual bool SetUseWebhook(bool enable) = 0;
-  virtual bool SetWebhookURL(const char* url) = 0;
+  virtual void SetUseWebhook(bool enable) = 0;
+  virtual void SetWebhookURL(const char* url) = 0;
 
-  virtual bool EnableEvents() = 0;
-  virtual bool DisableEvents() = 0;
+  virtual void EnableEvents() = 0;
+  virtual void DisableEvents() = 0;
 
   virtual ~IBotAPI() = default;
 };
