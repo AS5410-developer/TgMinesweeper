@@ -44,6 +44,11 @@ const IError* Console::ExecuteCommand(const std::string& command) {
 
   for (unsigned int i = 0; i < size; i++) {
     if (oneCommand[i] == '\"') {
+      if (sem) {
+        oneCommand[i + 1] = '\0';
+        args.push_back(oneCommand + last);
+        last = i + 1;
+      }
       sem = !sem;
       continue;
     }
