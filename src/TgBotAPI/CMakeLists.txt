@@ -1,5 +1,5 @@
 add_library(TgBotAPI MODULE Entry.cpp BotAPI.cpp)
-target_link_libraries(TgBotAPI PRIVATE httplib)
+target_link_libraries(TgBotAPI PRIVATE httplib tgbot-cpp)
 
 generate_export_header(TgBotAPI
     EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/TgBotAPIExport.h"

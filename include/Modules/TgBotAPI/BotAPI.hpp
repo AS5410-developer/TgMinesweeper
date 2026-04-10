@@ -1,6 +1,8 @@
 #ifndef INC_BOTAPI_HPP
 #define INC_BOTAPI_HPP
 
+#include <tgbot/tgbot.h>
+
 #include <BotAPI/IBotAPI.hpp>
 #include <thread>
 
