@@ -1,6 +1,3 @@
-[submodule "third-party/tgbotxx"]
-	path = third-party/tgbotxx
-	url = https://github.com/baderouaich/tgbotxx/
 [submodule "third-party/httplib"]
 	path = third-party/httplib
 	url = https://github.com/yhirose/cpp-httplib

@@ -23,7 +23,10 @@ void BotAPI::OnLoaded() {
   GetEngine()->GetConsole().RegisterConCmd(TokenCMD);
 }
 void BotAPI::OnUpdate() {}
-void BotAPI::OnDisabled() {}
+void BotAPI::OnDisabled() {
+  handler->stop();
+  MessagesThreadHandle.join();
+}
 
 void BotAPI::SetToken(const char* token) {
   if (Token) delete[] (Token);
@@ -31,5 +34,7 @@ void BotAPI::SetToken(const char* token) {
   strcpy(Token, token);
 }
 
-void BotAPI::SetUseWebhook(bool enable) {}
+void BotAPI::MessagesThread() { handler->start(); }
+
+void BotAPI::SetUseWebhook(bool enable) { UseWebhook = enable; }
 void BotAPI::SetWebhookURL(const char* url) {}

@@ -2,8 +2,7 @@
 #define INC_BOTAPI_HPP
 
 #include <BotAPI/IBotAPI.hpp>
-#include <Modules/TgBotAPI/Handler.hpp>
-#include <tgbotxx/tgbotxx.hpp>
+#include <thread>
 
 namespace AS::Engine {
 class BotHandler;
@@ -26,6 +25,8 @@ class BotAPI : public IBotAPI {
   virtual void EnableEvents() override { Events = true; }
   virtual void DisableEvents() override { Events = true; }
 
+  void MessagesThread();
+
   static void SetEngine(IEngine* engine) { EngineInstance = engine; }
   static IEngine* GetEngine() { return EngineInstance; }
 
@@ -35,9 +36,10 @@ class BotAPI : public IBotAPI {
 
  private:
   static IEngine* EngineInstance;
+  std::thread MessagesThreadHandle;
   static BotAPI* Instance;
-  BotHandler* handler = 0;
   char* Token = 0;
+  uint64_t LastUpdate = 0;
   bool UseWebhook = false;
   bool Events = false;
 };
