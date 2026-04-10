@@ -16,6 +16,12 @@ class Server : public IServer {
   virtual void OnEnabled() override;
   virtual void OnDisabled() override;
 
+  virtual void OnInlineRequest(const char* request) override {}
+  virtual void OnCommand(const char* command) override {}
+  virtual void OnNonCommand(const char* message) override {}
+  virtual void OnAnyMessage(const char* message) override {}
+  virtual void OnCallback(const char* message) override {}
+
   static void SetEngine(IEngine* engine) { EngineInstance = engine; }
   static IEngine* GetEngine() { return EngineInstance; }
 

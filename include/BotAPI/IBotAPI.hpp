@@ -6,11 +6,14 @@
 #include <Base/IError.hpp>
 #include <Base/IModule.hpp>
 #include <Base/ResultOrError.hpp>
+#include <BotAPI/IKeyboard.hpp>
 #include <string>
 
 namespace AS::Engine {
 class ENGINE_EXPORT IBotAPI : public IModule {
  public:
+  virtual IKeyboard* GetKeyboard() = 0;
+
   virtual void SetToken(const char* token) = 0;
 
   virtual void SetUseWebhook(bool enable) = 0;

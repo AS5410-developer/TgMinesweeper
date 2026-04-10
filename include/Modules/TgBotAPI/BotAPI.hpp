@@ -4,10 +4,12 @@
 #include <tgbot/tgbot.h>
 
 #include <BotAPI/IBotAPI.hpp>
+#include <Modules/Engine.hpp>
+#include <Modules/TgBotAPI/Keyboard.hpp>
 #include <thread>
 
 namespace AS::Engine {
-class BotHandler;
+
 class BotAPI : public IBotAPI {
  public:
   BotAPI() {}
@@ -18,14 +20,23 @@ class BotAPI : public IBotAPI {
   virtual void OnEnabled() override {}
   virtual void OnDisabled() override;
 
+  virtual IKeyboard* GetKeyboard() override { return new Keyboard; }
+
   virtual void SetToken(const char* token) override;
   char* GetToken() { return Token; }
 
   virtual void SetUseWebhook(bool enable) override;
   virtual void SetWebhookURL(const char* url) override;
 
+  bool GetUseWebhook() { return UseWebhook; }
+  char* GetWebhookURL() { return WebhookURL; }
+  char* GetToken() const { return Token; }
+
+  void Start();
+  void Stop();
+
   virtual void EnableEvents() override { Events = true; }
-  virtual void DisableEvents() override { Events = true; }
+  virtual void DisableEvents() override { Events = false; }
 
   void MessagesThread();
 
@@ -40,9 +51,11 @@ class BotAPI : public IBotAPI {
   static IEngine* EngineInstance;
   std::thread MessagesThreadHandle;
   static BotAPI* Instance;
+  TgBot::Bot* handler = 0;
   char* Token = 0;
-  uint64_t LastUpdate = 0;
+  char* WebhookURL = 0;
   bool UseWebhook = false;
+  bool Runned = false;
   bool Events = false;
 };
 }  // namespace AS::Engine

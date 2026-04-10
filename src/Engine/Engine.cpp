@@ -7,7 +7,6 @@ using namespace AS::Engine;
 Engine::Engine() {}
 
 std::chrono::steady_clock::time_point Engine::PrepareTick() {
-  std::chrono::high_resolution_clock::now();
   return std::chrono::high_resolution_clock::now();
 }
 std::chrono::steady_clock::time_point Engine::EndTick() {
@@ -51,7 +50,14 @@ void Engine::OnLoaded() {
     MainWindow->SetFullscreen(false);
   }
 
-  LoadModule("./bin/libTgBotAPI.so");
+  result = LoadModule(FilesystemInstance->GetPath(
+      "libTgBotAPI.so", AS_ENGINE_FILE_SYSTEM_BINDIR));
+  if (result.Failed()) {
+    QuitOnError(result);
+    return;
+  }
+  BotAPIInstance =
+      dynamic_cast<IBotAPI*>(GetModuleInfo(result.GetResult())->Module);
 
   result = LoadModule(FilesystemInstance->GetPath(
       "bin/libServer.so", AS_ENGINE_FILE_SYSTEM_GAMEDIR));
