@@ -1,4 +1,4 @@
-add_library(TgBotAPI MODULE Entry.cpp BotAPI.cpp Handler.cpp)
+add_library(TgBotAPI MODULE Entry.cpp BotAPI.cpp)
 target_link_libraries(TgBotAPI PRIVATE httplib)
 
 generate_export_header(TgBotAPI
