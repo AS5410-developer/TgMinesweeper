@@ -19,7 +19,6 @@ add_link_options(
 add_compile_options(-stdlib=libc++)
 link_libraries(c++abi)
 
-add_subdirectory(third-party/tgbotxx)
 add_subdirectory(third-party/httplib)
 
 add_subdirectory(src)
