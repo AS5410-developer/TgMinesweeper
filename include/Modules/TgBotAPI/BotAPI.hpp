@@ -6,6 +6,8 @@
 #include <BotAPI/IBotAPI.hpp>
 #include <Modules/Engine.hpp>
 #include <Modules/TgBotAPI/Keyboard.hpp>
+#include <Modules/TgBotAPI/Message.hpp>
+#include <Modules/TgBotAPI/User.hpp>
 #include <thread>
 
 namespace AS::Engine {
@@ -21,6 +23,10 @@ class BotAPI : public IBotAPI {
   virtual void OnDisabled() override;
 
   virtual IKeyboard* GetKeyboard() override { return new Keyboard; }
+  virtual IMessage* GetMessage() override { return new Message; }
+
+  virtual void AddChoose(std::vector<InlineChoose> chooses) override;
+  virtual void EditMessage(IMessage* message) override;
 
   virtual void SetToken(const char* token) override;
   char* GetToken() { return Token; }

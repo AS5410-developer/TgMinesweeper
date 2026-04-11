@@ -12,6 +12,7 @@
 #include <FileSystem/IFileSystem.hpp>
 #include <Launcher/ILauncher.hpp>
 #include <Platform/IPlatform.hpp>
+#include <Server/IServer.hpp>
 #include <string>
 
 namespace AS::Engine {
@@ -48,6 +49,7 @@ class ENGINE_EXPORT IEngine : public IModule {
   virtual IConsole& GetConsole() = 0;
   virtual IPlatform& GetPlatform() = 0;
   virtual IFileSystem& GetFileSystem() = 0;
+  virtual IServer* GetServer() = 0;
   virtual IBotAPI* GetBotAPI() = 0;
 
   virtual WindowSize GetWindowSize() const = 0;

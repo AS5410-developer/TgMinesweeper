@@ -43,6 +43,7 @@ class ENGINE_EXPORT Engine final : public IEngine {
   virtual IConsole& GetConsole() override { return ConsoleInstance; }
   virtual IPlatform& GetPlatform() override { return *PlatformInstance; }
   virtual IFileSystem& GetFileSystem() override { return *FilesystemInstance; }
+  virtual IServer* GetServer() override { return ServerInstance; };
   virtual IBotAPI* GetBotAPI() override { return BotAPIInstance; }
 
   virtual WindowSize GetWindowSize() const override {
@@ -84,6 +85,7 @@ class ENGINE_EXPORT Engine final : public IEngine {
   IFileSystem* FilesystemInstance;
   IWindow* MainWindow = 0;
   IBotAPI* BotAPIInstance;
+  IServer* ServerInstance;
   Console ConsoleInstance;
   ILauncher* LauncherInstance;
 };

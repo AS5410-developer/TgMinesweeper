@@ -12,6 +12,9 @@ class Keyboard : public IKeyboard {
   virtual void SetRows(std::initializer_list<Row> rows) override;
   virtual void SetRows(std::vector<RowVec> rows) override;
 
+  TgBot::InlineKeyboardMarkup::Ptr GetKeyboardMarkup() const {
+    return KeyboardMarkup;
+  }
   virtual ~Keyboard() = default;
 
  private:

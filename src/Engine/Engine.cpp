@@ -65,8 +65,8 @@ void Engine::OnLoaded() {
     QuitOnError(result);
     return;
   }
-  FilesystemInstance =
-      dynamic_cast<IFileSystem*>(GetModuleInfo(result.GetResult())->Module);
+  ServerInstance =
+      dynamic_cast<IServer*>(GetModuleInfo(result.GetResult())->Module);
 
   std::thread tickThread([&]() { OnTick(); });
   tickThread.detach();
@@ -75,7 +75,7 @@ void Engine::OnLoaded() {
 }
 void Engine::OnRegisterOptions() {}
 void Engine::OnUpdate() {
-  if (MainWindow) MainWindow->Update();
+  л if (MainWindow) MainWindow->Update();
   std::chrono::steady_clock::time_point startTime;
   std::chrono::steady_clock::time_point endTime;
   std::vector<std::thread> threads;

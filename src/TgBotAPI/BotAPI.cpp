@@ -75,25 +75,15 @@ void BotAPI::Start() {
   handler->getApi().deleteWebhook(true);
   MessagesThreadHandle = std::thread(&BotAPI::MessagesThread, this);
   handler->getEvents().onInlineQuery([&](TgBot::InlineQuery::Ptr query) {
-    BotAPI::GetEngine()->GetConsole()
-        << "Inline query: " << query->query << EndLine;
-
-    TgBot::InputTextMessageContent::Ptr input(
-        new TgBot::InputTextMessageContent);
-    input->messageText = "Indev";
-
-    TgBot::InlineQueryResultArticle::Ptr article(
-        new TgBot::InlineQueryResultArticle);
-    article->id = "1";
-    article->title = "Indev";
-    article->description = "This app indev";
-    article->inputMessageContent = input;
-
-    handler->getApi().answerInlineQuery(query->id, {article});
+    if (Events)
+      EngineInstance->GetServer()->OnInlineRequest(query->id.data(),
+                                                   query->query.data());
   });
-  handler->getEvents().onAnyMessage([](TgBot::Message::Ptr message) {
+  handler->getEvents().onAnyMessage([&](TgBot::Message::Ptr message) {
     BotAPI::GetEngine()->GetConsole()
         << "Message: " << message->text << EndLine;
+    if (Events && message->text[0] == '/')
+      EngineInstance->GetServer()->OnCommand(message->text.data());
   });
 }
 void BotAPI::Stop() {
@@ -115,6 +105,48 @@ void BotAPI::SetToken(const char* token) {
   if (runned) Start();
 }
 
+void BotAPI::AddChoose(std::vector<InlineChoose> chooses) {
+  if (chooses.empty()) return;
+  if (!Token || !Token[0]) return;
+  if (!handler) return;
+  std::vector<TgBot::InlineQueryResult::Ptr> results;
+  for (const auto& choose : chooses) {
+    if (!choose.message) continue;
+    if (!choose.message->GetText()) continue;
+
+    TgBot::InputTextMessageContent::Ptr input(
+        new TgBot::InputTextMessageContent);
+    input->messageText = choose.message->GetText();
+
+    TgBot::InlineQueryResultArticle::Ptr article(
+        new TgBot::InlineQueryResultArticle);
+    article->id = std::to_string(choose.id);
+    article->title = choose.title;
+    article->replyMarkup =
+        ((Message*)choose.message)->GetKeyboard()
+            ? ((Message*)choose.message)->GetKeyboard()->GetKeyboardMarkup()
+            : nullptr;
+    article->description = choose.description;
+    article->inputMessageContent = input;
+
+    results.push_back(article);
+  }
+
+  handler->getApi().answerInlineQuery(chooses[0].queryID, results);
+}
+void BotAPI::EditMessage(IMessage* message) {
+  if (!message) return;
+  if (!message->GetText()) return;
+  if (!Token || !Token[0]) return;
+  if (!handler) return;
+
+  handler->getApi().editMessageText(
+      message->GetText(), ((Message*)message)->GetChatID(), message->GetID(),
+      "", "", nullptr,
+      ((Message*)message)->GetKeyboard()
+          ? ((Message*)message)->GetKeyboard()->GetKeyboardMarkup()
+          : nullptr);
+}
 void BotAPI::MessagesThread() {
   TgBot::TgLongPoll longPoll(*handler);
 

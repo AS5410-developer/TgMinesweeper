@@ -1,4 +1,4 @@
-add_library(TgBotAPI MODULE Entry.cpp BotAPI.cpp Keyboard.cpp)
+add_library(TgBotAPI MODULE Entry.cpp BotAPI.cpp Keyboard.cpp Message.cpp User.cpp)
 target_link_libraries(TgBotAPI PRIVATE httplib TgBot)
 
 generate_export_header(TgBotAPI

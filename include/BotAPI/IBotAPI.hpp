@@ -7,12 +7,25 @@
 #include <Base/IModule.hpp>
 #include <Base/ResultOrError.hpp>
 #include <BotAPI/IKeyboard.hpp>
+#include <BotAPI/IMessage.hpp>
+#include <BotAPI/IUser.hpp>
 #include <string>
 
 namespace AS::Engine {
+struct InlineChoose {
+  unsigned char id;
+  std::string queryID;
+  std::string title;
+  std::string description;
+  IMessage* message;
+};
 class ENGINE_EXPORT IBotAPI : public IModule {
  public:
   virtual IKeyboard* GetKeyboard() = 0;
+  virtual IMessage* GetMessage() = 0;
+
+  virtual void AddChoose(std::vector<InlineChoose> chooses) = 0;
+  virtual void EditMessage(IMessage* message) = 0;
 
   virtual void SetToken(const char* token) = 0;
 
