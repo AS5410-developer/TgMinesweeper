@@ -46,6 +46,7 @@ void Field::Init() {
     AS::Engine::Server::GetEngine()->GetConsole() << AS::Engine::EndLine;
   }
   Remain = RemainReal = MineCount;
+  SafeRemain = Width * Height - MineCount;
 }
 bool Field::OpenCell(unsigned char x, unsigned char y) {
   if (!Inited) return false;
@@ -55,6 +56,9 @@ bool Field::OpenCell(unsigned char x, unsigned char y) {
   }
   if (!FIELD_CELL_IS(GetCell(x, y), FIELD_CELL_FLAG)) {
     SetCell(x, y, GetCell(x, y) | FIELD_CELL_OPENED);
+    SafeRemain--;
+    AS::Engine::Server::GetEngine()->GetConsole()
+        << SafeRemain << AS::Engine::EndLine;
   }
 
   return false;

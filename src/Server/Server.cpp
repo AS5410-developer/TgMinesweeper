@@ -71,7 +71,7 @@ void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
   if (!strcmp(message, "ready") &&
       FindUser(user->GetID())->GetStatus() == USER_STATUS_WAITING) {
     EngineInstance->GetBotAPI()->AnswerCallback(queryID);
-    messageId->SetText("Разминируйте поле, сапёр.\nОсталось флагов: 10");
+    messageId->SetText("Разминируйте поле, сапёр. Осталось флагов: 10");
     auto keyboard = EngineInstance->GetBotAPI()->GetKeyboard();
     Field* field = new Field;
     field->SetWidth(7);
@@ -117,35 +117,35 @@ void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
     auto field = userObj->GetCurrentField();
     int x, y;
     sscanf(message, "open_%d_%d", &x, &y);
+    if (!field->IsOpened(x, y)) {
+      if (!field->IsFlagged(x, y) &&
+          userObj->GetCurrentAction() == USER_ACTION_DIG) {
+        if (field->OpenCell(x, y)) {
+          messageId->SetText("Минус ноги и руки");
+          userObj->SetStatus(USER_STATUS_NONE);
+          userObj->SetCurrentMessage(nullptr);
+          delete field;
+          messageId->SetKeyboard(nullptr);
+          (*userObj)--;
+          EngineInstance->GetBotAPI()->EditMessage(messageId);
+        } else {
+          auto keyboard = userObj->GetCurrentKeyboard();
+          auto rows = keyboard->GetRows();
+          char minesAround = field->GetMinesCountAround(x, y);
+          if (rows[x][y].Text == "*") {
+            if (minesAround > 0) {
+              rows[x][y].Text = std::to_string(minesAround);
+            } else {
+              rows[x][y].Text = ".";
+            }
 
-    if (userObj->GetCurrentAction() == USER_ACTION_DIG) {
-      if (field->OpenCell(x, y)) {
-        messageId->SetText("Минус ноги и руки");
-        userObj->SetStatus(USER_STATUS_NONE);
-        userObj->SetCurrentMessage(nullptr);
-        delete field;
-        messageId->SetKeyboard(nullptr);
-        (*userObj)--;
-        EngineInstance->GetBotAPI()->EditMessage(messageId);
-      } else {
-        auto keyboard = userObj->GetCurrentKeyboard();
-        auto rows = keyboard->GetRows();
-        char minesAround = field->GetMinesCountAround(x, y);
-        if (rows[x][y].Text == "*") {
-          if (minesAround > 0) {
-            rows[x][y].Text = std::to_string(minesAround);
-          } else {
-            rows[x][y].Text = ".";
+            keyboard->SetRows(rows);
+            messageId->SetKeyboard(keyboard);
+            EngineInstance->GetBotAPI()->EditMessageKeyboard(messageId);
           }
-
-          keyboard->SetRows(rows);
-          messageId->SetKeyboard(keyboard);
-          EngineInstance->GetBotAPI()->EditMessageKeyboard(messageId);
         }
-      }
-    } else {
-      field->Flag(x, y);
-      if (field->GetRemainReal() != 0 && field->GetRemain() != 0) {
+      } else if (userObj->GetCurrentAction() == USER_ACTION_FLAG) {
+        field->Flag(x, y);
         auto keyboard = userObj->GetCurrentKeyboard();
         auto rows = keyboard->GetRows();
         if (field->GetCell(x, y) & FIELD_CELL_FLAG) {
@@ -155,19 +155,22 @@ void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
         }
         keyboard->SetRows(rows);
         messageId->SetText(
-            std::format("Разминируйте поле, сапёр.\nОсталось флагов: {}",
+            std::format("Разминируйте поле, сапёр. Осталось флагов: {}",
                         (int)field->GetRemain())
                 .c_str());
         messageId->SetKeyboard(keyboard);
-      } else {
-        messageId->SetText("gj");
-        messageId->SetKeyboard(nullptr);
-        userObj->SetStatus(USER_STATUS_NONE);
-        userObj->SetCurrentMessage(nullptr);
-        ++(*userObj);
-        delete field;
+
+        EngineInstance->GetBotAPI()->EditMessage(messageId);
       }
+    }
+    if (field->GetRemain() >= 0 && !field->GetSafeRemain()) {
+      messageId->SetText("gj");
+      messageId->SetKeyboard(nullptr);
       EngineInstance->GetBotAPI()->EditMessage(messageId);
+      userObj->SetStatus(USER_STATUS_NONE);
+      userObj->SetCurrentMessage(nullptr);
+      ++(*userObj);
+      delete field;
     }
     EngineInstance->GetBotAPI()->AnswerCallback(queryID);
   } else if (std::string(message).starts_with("flag") &&

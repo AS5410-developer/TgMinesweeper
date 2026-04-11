@@ -27,6 +27,7 @@ class Field final {
   unsigned long long GetChance() { return Chance; }
   char GetRemain() { return Remain; }
   char GetRemainReal() { return RemainReal; }
+  char GetSafeRemain() { return SafeRemain; }
 
   void Init();
   unsigned char GetCell(unsigned char x, unsigned char y) {
@@ -34,6 +35,14 @@ class Field final {
     return Cells[y * Width + x];
   }
   bool OpenCell(unsigned char x, unsigned char y);
+  bool IsFlagged(unsigned char x, unsigned char y) {
+    if (!Cells) return false;
+    return FIELD_CELL_IS(GetCell(x, y), FIELD_CELL_FLAG);
+  }
+  bool IsOpened(unsigned char x, unsigned char y) {
+    if (!Cells) return false;
+    return FIELD_CELL_IS(GetCell(x, y), FIELD_CELL_OPENED);
+  }
   void Flag(unsigned char x, unsigned char y);
   char GetMinesCountAround(unsigned char x, unsigned char y);
   void Destroy();
@@ -54,6 +63,7 @@ class Field final {
   unsigned long long Chance = 7;
   char Remain = 0;
   char RemainReal = 0;
+  char SafeRemain = 0;
 };
 
 #endif
