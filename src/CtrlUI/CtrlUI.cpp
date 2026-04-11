@@ -67,7 +67,9 @@ void CtrlUI::OnRegisterOptions() {}
 void CtrlUI::OnUpdate() {}
 void CtrlUI::OnTick() {
   if (!(EngineInstance->GetCurrentTime() % 128)) {
+    wclear(modulesSubwin);
     SetModulesSubwinLayout(modulesSubwin);
+    wrefresh(win);
   }
 }
 void CtrlUI::OnEnabled() {}
