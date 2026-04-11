@@ -19,8 +19,10 @@ using Row = std::initializer_list<Button>;
 using RowVec = std::vector<Button>;
 class ENGINE_EXPORT IKeyboard {
  public:
-  virtual void SetRows(std::initializer_list<Row> rows) = 0;
-  virtual void SetRows(std::vector<RowVec> rows) = 0;
+  virtual void SetRows(const std::initializer_list<Row>& rows) = 0;
+  virtual void SetRows(const std::vector<RowVec>& rows) = 0;
+
+  virtual std::vector<RowVec> GetRows() const = 0;
 
   virtual ~IKeyboard() = default;
 };

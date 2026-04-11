@@ -25,6 +25,8 @@ class Field final {
   unsigned char GetMineCount() { return MineCount; }
   unsigned long long GetSeed() { return Seed; }
   unsigned long long GetChance() { return Chance; }
+  char GetRemain() { return Remain; }
+  char GetRemainReal() { return RemainReal; }
 
   void Init();
   unsigned char GetCell(unsigned char x, unsigned char y) {
@@ -32,6 +34,8 @@ class Field final {
     return Cells[y * Width + x];
   }
   bool OpenCell(unsigned char x, unsigned char y);
+  void Flag(unsigned char x, unsigned char y);
+  char GetMinesCountAround(unsigned char x, unsigned char y);
   void Destroy();
 
   virtual ~Field() = default;
@@ -47,7 +51,9 @@ class Field final {
   unsigned char MineCount = 0;
   unsigned long long Seed = 0;
   unsigned char* Cells = 0;
-  unsigned long long Chance = 0;
+  unsigned long long Chance = 7;
+  char Remain = 0;
+  char RemainReal = 0;
 };
 
 #endif

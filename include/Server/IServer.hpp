@@ -10,6 +10,8 @@ class ENGINE_EXPORT IServer : public IModule {
  public:
   virtual void OnInlineRequest(const char* queryID, const char* request,
                                IUser* sender) = 0;
+  virtual void OnInlineChosen(const char* queryID, const char* resultID,
+                              IUser* sender, IMessage* message) = 0;
   virtual void OnCommand(const char* command) = 0;
   virtual void OnNonCommand(const char* message) = 0;
   virtual void OnAnyMessage(const char* message) = 0;

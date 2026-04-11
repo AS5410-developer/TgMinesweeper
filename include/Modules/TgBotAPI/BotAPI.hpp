@@ -27,6 +27,7 @@ class BotAPI : public IBotAPI {
 
   virtual void AddChoose(std::vector<InlineChoose> chooses) override;
   virtual void EditMessage(IMessage* message) override;
+  virtual void EditMessageKeyboard(IMessage* message) override;
   virtual void AnswerCallback(const char* queryID,
                               const char* message = 0) override;
 

@@ -45,6 +45,7 @@ void Field::Init() {
     }
     AS::Engine::Server::GetEngine()->GetConsole() << AS::Engine::EndLine;
   }
+  Remain = RemainReal = MineCount;
 }
 bool Field::OpenCell(unsigned char x, unsigned char y) {
   if (!Inited) return false;
@@ -57,6 +58,36 @@ bool Field::OpenCell(unsigned char x, unsigned char y) {
   }
 
   return false;
+}
+void Field::Flag(unsigned char x, unsigned char y) {
+  if (!Inited) return;
+  if (FIELD_CELL_IS(GetCell(x, y), FIELD_CELL_FLAG)) {
+    SetCell(x, y, GetCell(x, y) & ~FIELD_CELL_FLAG);
+    Remain++;
+    if (FIELD_CELL_IS(GetCell(x, y), FIELD_CELL_MINE)) {
+      RemainReal++;
+    }
+  } else {
+    SetCell(x, y, GetCell(x, y) | FIELD_CELL_FLAG);
+    Remain--;
+    if (FIELD_CELL_IS(GetCell(x, y), FIELD_CELL_MINE)) {
+      RemainReal--;
+    }
+  }
+}
+char Field::GetMinesCountAround(unsigned char x, unsigned char y) {
+  if (!Inited) return 0;
+  char count = 0;
+  for (char i = -1; i <= 1; i++) {
+    for (char j = -1; j <= 1; j++) {
+      if (x + i < Width && y + j < Height && x + i >= 0 && y + j >= 0) {
+        if (FIELD_CELL_IS(GetCell(x + i, y + j), FIELD_CELL_MINE)) {
+          count++;
+        }
+      }
+    }
+  }
+  return count;
 }
 void Field::Destroy() {
   if (!Inited) return;

@@ -2,7 +2,7 @@
 
 using namespace AS::Engine;
 
-void Keyboard::SetRows(std::initializer_list<Row> rows) {
+void Keyboard::SetRows(const std::initializer_list<Row>& rows) {
   KeyboardMarkup =
       TgBot::InlineKeyboardMarkup::Ptr(new TgBot::InlineKeyboardMarkup);
   for (const auto& row : rows) {
@@ -15,9 +15,10 @@ void Keyboard::SetRows(std::initializer_list<Row> rows) {
     }
     KeyboardMarkup->inlineKeyboard.push_back(buttons);
   }
+  Rows = std::vector<RowVec>(rows.begin(), rows.end());
 }
 
-void Keyboard::SetRows(std::vector<RowVec> rows) {
+void Keyboard::SetRows(const std::vector<RowVec>& rows) {
   KeyboardMarkup =
       TgBot::InlineKeyboardMarkup::Ptr(new TgBot::InlineKeyboardMarkup);
   for (const auto& row : rows) {
@@ -30,4 +31,5 @@ void Keyboard::SetRows(std::vector<RowVec> rows) {
     }
     KeyboardMarkup->inlineKeyboard.push_back(buttons);
   }
+  Rows = rows;
 }

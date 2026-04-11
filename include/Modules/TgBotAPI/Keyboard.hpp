@@ -9,8 +9,9 @@ namespace AS::Engine {
 class Keyboard : public IKeyboard {
  public:
   Keyboard() {}
-  virtual void SetRows(std::initializer_list<Row> rows) override;
-  virtual void SetRows(std::vector<RowVec> rows) override;
+  virtual void SetRows(const std::initializer_list<Row>& rows) override;
+  virtual void SetRows(const std::vector<RowVec>& rows) override;
+  virtual std::vector<RowVec> GetRows() const override { return Rows; }
 
   TgBot::InlineKeyboardMarkup::Ptr GetKeyboardMarkup() const {
     return KeyboardMarkup;
@@ -18,7 +19,8 @@ class Keyboard : public IKeyboard {
   virtual ~Keyboard() = default;
 
  private:
-  TgBot::InlineKeyboardMarkup::Ptr KeyboardMarkup;
+  TgBot::InlineKeyboardMarkup::Ptr KeyboardMarkup = nullptr;
+  std::vector<RowVec> Rows;
 };
 }  // namespace AS::Engine
 

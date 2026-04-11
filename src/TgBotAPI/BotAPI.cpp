@@ -99,6 +99,18 @@ void BotAPI::Start() {
                                               query->data.data());
     }
   });
+  handler->getEvents().onChosenInlineResult(
+      [&](TgBot::ChosenInlineResult::Ptr result) {
+        if (Events) {
+          User* user = new User;
+          user->GetDataFrom(result->from);
+          Message* message = new Message;
+          message->SetID(result->inlineMessageId);
+          message->SetInline(true);
+          EngineInstance->GetServer()->OnInlineChosen(
+              result->resultId.data(), result->query.data(), user, message);
+        }
+      });
   handler->getEvents().onAnyMessage([&](TgBot::Message::Ptr message) {
     if (Events && message->text[0] == '/')
       EngineInstance->GetServer()->OnCommand(message->text.data());
@@ -150,7 +162,7 @@ void BotAPI::AddChoose(std::vector<InlineChoose> chooses) {
     results.push_back(article);
   }
 
-  handler->getApi().answerInlineQuery(chooses[0].queryID, results);
+  handler->getApi().answerInlineQuery(chooses[0].queryID, results, 0);
 }
 void BotAPI::EditMessage(IMessage* message) {
   if (!message) return;
@@ -172,12 +184,30 @@ void BotAPI::EditMessage(IMessage* message) {
             : nullptr);
   }
 }
+void BotAPI::EditMessageKeyboard(IMessage* message) {
+  if (!message) return;
+  if (!((Message*)message)->GetKeyboard()) return;
+  if (!Token || !Token[0]) return;
+  if (!handler) return;
+  if (!((Message*)message)->IsInline()) {
+    handler->getApi().editMessageReplyMarkup(
+        ((Message*)message)->GetChatID(), std::stoll(message->GetID()), "",
+        ((Message*)message)->GetKeyboard()->GetKeyboardMarkup());
+  } else {
+    handler->getApi().editMessageReplyMarkup(
+        0, 0, message->GetID(),
+        ((Message*)message)->GetKeyboard()->GetKeyboardMarkup());
+  }
+}
 void BotAPI::AnswerCallback(const char* queryID, const char* message) {
   if (!Token) return;
   if (!Token[0]) return;
   if (!handler) return;
   if (!queryID) return;
-  handler->getApi().answerCallbackQuery(queryID, message);
+  if (message)
+    handler->getApi().answerCallbackQuery(queryID, message);
+  else
+    handler->getApi().answerCallbackQuery(queryID);
 }
 void BotAPI::MessagesThread() {
   TgBot::TgLongPoll longPoll(*handler);

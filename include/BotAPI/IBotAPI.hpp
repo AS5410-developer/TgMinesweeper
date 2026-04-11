@@ -26,6 +26,7 @@ class ENGINE_EXPORT IBotAPI : public IModule {
 
   virtual void AddChoose(std::vector<InlineChoose> chooses) = 0;
   virtual void EditMessage(IMessage* message) = 0;
+  virtual void EditMessageKeyboard(IMessage* message) = 0;
   virtual void AnswerCallback(const char* queryID, const char* message = 0) = 0;
 
   virtual void SetToken(const char* token) = 0;
