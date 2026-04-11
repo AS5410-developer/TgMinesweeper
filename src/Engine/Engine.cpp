@@ -75,7 +75,7 @@ void Engine::OnLoaded() {
 }
 void Engine::OnRegisterOptions() {}
 void Engine::OnUpdate() {
-  л if (MainWindow) MainWindow->Update();
+  if (MainWindow) MainWindow->Update();
   std::chrono::steady_clock::time_point startTime;
   std::chrono::steady_clock::time_point endTime;
   std::vector<std::thread> threads;

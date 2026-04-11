@@ -66,10 +66,9 @@ void CtrlUI::OnLoaded() {
 void CtrlUI::OnRegisterOptions() {}
 void CtrlUI::OnUpdate() {}
 void CtrlUI::OnTick() {
-  /*if (!(EngineInstance->GetCurrentTime() % 128)) {
-    EngineInstance->GetConsole()
-        << "Tick: " << EngineInstance->GetCurrentTime() << EndLine;
-  }*/
+  if (!(EngineInstance->GetCurrentTime() % 128)) {
+    SetModulesSubwinLayout(modulesSubwin);
+  }
 }
 void CtrlUI::OnEnabled() {}
 void CtrlUI::OnDisabled() { UIThread.join(); }
