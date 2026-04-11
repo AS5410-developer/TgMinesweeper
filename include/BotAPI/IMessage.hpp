@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace AS::Engine {
-using MID = unsigned long long;
+using MID = std::string;
 class ENGINE_EXPORT IMessage {
  public:
   virtual void SetText(const char* text) = 0;

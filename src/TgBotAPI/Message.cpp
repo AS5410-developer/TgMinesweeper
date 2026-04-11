@@ -6,7 +6,7 @@ void Message::GetDataFrom(TgBot::Message::Ptr tgMessage) {
   Text = new char[strlen(tgMessage->text.data()) + 1];
   strcpy(Text, tgMessage->text.data());
 
-  ID = tgMessage->messageId;
+  ID = std::to_string(tgMessage->messageId);
   ChatID = tgMessage->chat->id;
   KeyboardD = nullptr;
 }

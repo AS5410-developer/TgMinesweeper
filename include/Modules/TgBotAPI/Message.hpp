@@ -22,7 +22,11 @@ class Message : public IMessage {
   }
   Keyboard* GetKeyboard() const { return KeyboardD; }
   virtual MID GetID() const override { return ID; }
+  void SetID(const MID& id) { ID = id; }
   MID GetChatID() const { return ChatID; }
+
+  bool IsInline() const { return inlineR; }
+  void SetInline(bool inlineR) { this->inlineR = inlineR; }
 
   virtual void GetDataFrom(TgBot::Message::Ptr tgMessage);
 
@@ -30,6 +34,7 @@ class Message : public IMessage {
 
  private:
   char* Text;
+  bool inlineR = false;
   MID ID;
   MID ChatID;
   Keyboard* KeyboardD;

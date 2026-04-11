@@ -75,13 +75,31 @@ void BotAPI::Start() {
   handler->getApi().deleteWebhook(true);
   MessagesThreadHandle = std::thread(&BotAPI::MessagesThread, this);
   handler->getEvents().onInlineQuery([&](TgBot::InlineQuery::Ptr query) {
-    if (Events)
+    if (Events) {
+      User* user = new User;
+      user->GetDataFrom(query->from);
       EngineInstance->GetServer()->OnInlineRequest(query->id.data(),
-                                                   query->query.data());
+                                                   query->query.data(), user);
+    }
+  });
+  handler->getEvents().onCallbackQuery([&](TgBot::CallbackQuery::Ptr query) {
+    if (Events) {
+      User* user = new User;
+      user->GetDataFrom(query->from);
+      Message* message = 0;
+      if (query->message) {
+        message = new Message;
+        message->GetDataFrom(query->message);
+      } else if (!query->inlineMessageId.empty()) {
+        message = new Message;
+        message->SetID(query->inlineMessageId);
+        message->SetInline(true);
+      }
+      EngineInstance->GetServer()->OnCallback(query->id.data(), message, user,
+                                              query->data.data());
+    }
   });
   handler->getEvents().onAnyMessage([&](TgBot::Message::Ptr message) {
-    BotAPI::GetEngine()->GetConsole()
-        << "Message: " << message->text << EndLine;
     if (Events && message->text[0] == '/')
       EngineInstance->GetServer()->OnCommand(message->text.data());
   });
@@ -139,13 +157,27 @@ void BotAPI::EditMessage(IMessage* message) {
   if (!message->GetText()) return;
   if (!Token || !Token[0]) return;
   if (!handler) return;
-
-  handler->getApi().editMessageText(
-      message->GetText(), ((Message*)message)->GetChatID(), message->GetID(),
-      "", "", nullptr,
-      ((Message*)message)->GetKeyboard()
-          ? ((Message*)message)->GetKeyboard()->GetKeyboardMarkup()
-          : nullptr);
+  if (!((Message*)message)->IsInline()) {
+    handler->getApi().editMessageText(
+        message->GetText(), ((Message*)message)->GetChatID(),
+        std::stoll(message->GetID()), "", "", nullptr,
+        ((Message*)message)->GetKeyboard()
+            ? ((Message*)message)->GetKeyboard()->GetKeyboardMarkup()
+            : nullptr);
+  } else {
+    handler->getApi().editMessageText(
+        message->GetText(), 0, 0, message->GetID(), "", nullptr,
+        ((Message*)message)->GetKeyboard()
+            ? ((Message*)message)->GetKeyboard()->GetKeyboardMarkup()
+            : nullptr);
+  }
+}
+void BotAPI::AnswerCallback(const char* queryID, const char* message) {
+  if (!Token) return;
+  if (!Token[0]) return;
+  if (!handler) return;
+  if (!queryID) return;
+  handler->getApi().answerCallbackQuery(queryID, message);
 }
 void BotAPI::MessagesThread() {
   TgBot::TgLongPoll longPoll(*handler);
