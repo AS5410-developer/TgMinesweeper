@@ -9,7 +9,7 @@
 namespace AS::Engine {
 class Server : public IServer {
  public:
-  Server() {}
+  Server() { ServerInstance = this; }
 
   virtual void OnLoaded() override;
   virtual void OnRegisterOptions() override;
@@ -33,6 +33,7 @@ class Server : public IServer {
 
   static void SetEngine(IEngine* engine) { EngineInstance = engine; }
   static IEngine* GetEngine() { return EngineInstance; }
+  static Server* GetServer() { return ServerInstance; }
 
   User* FindUser(UID uid) {
     if (Users.contains(uid)) return Users[uid];
@@ -44,6 +45,7 @@ class Server : public IServer {
 
  private:
   static IEngine* EngineInstance;
+  static Server* ServerInstance;
   std::map<UID, User*> Users;
 };
 }  // namespace AS::Engine

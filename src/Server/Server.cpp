@@ -1,17 +1,21 @@
 #include <Engine/ConVar.hpp>
 #include <Engine/IConsole.hpp>
 #include <Modules/Server/Field.hpp>
+#include <Modules/Server/Game.hpp>
 #include <Modules/Server/Server.hpp>
 
 using namespace AS::Engine;
 
 IEngine* Server::EngineInstance = 0;
+Server* Server::ServerInstance = 0;
+Game* game = 0;
 
 void Exit(int argc, char** argv) { Server::GetEngine()->Quit(); }
 
 ConCMD exitCMD("exit", Exit, "Exit");
 
 void Server::OnLoaded() {
+  game = new Game;
   EngineInstance->GetConsole() << "Server starting..." << EndLine;
   EngineInstance->GetConsole().RegisterConCmd(exitCMD);
   EngineInstance->GetBotAPI()->EnableEvents();
@@ -71,7 +75,6 @@ void Server::OnCallback(const char* queryID,
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "не твоя кнопка");
     return;
   }
-
   if (!foundUser->GetCurrentMessage()) {
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "не твоя кнопка");
     return;
@@ -80,125 +83,25 @@ void Server::OnCallback(const char* queryID,
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "не твоя кнопка");
     return;
   }
+
   if (!strcmp(message, "ready") &&
-      FindUser(user->GetID())->GetStatus() == USER_STATUS_WAITING) {
-    EngineInstance->GetBotAPI()->AnswerCallback(queryID);
-    messageId->SetText("Разминируйте поле, сапёр. Осталось флагов: 10");
-    auto keyboard = EngineInstance->GetBotAPI()->GetKeyboard();
-    Field* field = new Field;
-    field->SetWidth(7);
-    field->SetHeight(7);
-    field->SetMineCount(10);
-    field->Init();
-    FindUser(user->GetID())->SetCurrentField(field);
-    FindUser(user->GetID())->SetStatus(USER_STATUS_PLAYING_SINGLE);
-    std::vector<std::vector<Button>> fieldKeyboard;
-    for (size_t i = 0; i < field->GetWidth(); i++) {
-      std::vector<Button> row;
-      for (size_t j = 0; j < field->GetHeight(); j++) {
-        Button button;
-        button.Text = "*";
-        button.CallbackData =
-            "open_" + std::to_string(i) + "_" + std::to_string(j);
-        row.push_back(button);
-      }
-      fieldKeyboard.push_back(row);
-    }
-    fieldKeyboard.push_back(
-        {{"Флаг", "flag"}, {"Сдаться", "minus_level"}, {"Копать", "dig"}});
-    keyboard->SetRows(fieldKeyboard);
-    FindUser(user->GetID())->SetCurrentKeyboard(keyboard);
-    messageId->SetKeyboard(keyboard);
-    EngineInstance->GetBotAPI()->EditMessage(messageId.get());
+      foundUser->GetStatus() == USER_STATUS_WAITING) {
+    game->Start(queryID, messageId, user);
   } else if (!strcmp(message, "minus_level")) {
-    EngineInstance->GetBotAPI()->AnswerCallback(queryID, "-левел за трусость");
-    auto userObj = FindUser(user->GetID());
-
-    userObj->SetStatus(USER_STATUS_NONE);
-    (*userObj)--;
-    userObj->SetCurrentMessage(nullptr);
-
-    messageId->SetText("беги беги, трус");
-    auto keyboard = EngineInstance->GetBotAPI()->GetKeyboard();
-    messageId->SetKeyboard(nullptr);
-    EngineInstance->GetBotAPI()->EditMessage(messageId.get());
+    game->End(queryID, messageId, user);
   } else if (std::string(message).starts_with("open_") &&
-             FindUser(user->GetID())->GetStatus() ==
-                 USER_STATUS_PLAYING_SINGLE) {
-    auto userObj = FindUser(user->GetID());
-    auto field = userObj->GetCurrentField();
+             foundUser->GetStatus() == USER_STATUS_PLAYING_SINGLE) {
     int x, y;
     sscanf(message, "open_%d_%d", &x, &y);
-    if (!field->IsOpened(x, y)) {
-      if (!field->IsFlagged(x, y) &&
-          userObj->GetCurrentAction() == USER_ACTION_DIG) {
-        if (field->OpenCell(x, y)) {
-          messageId->SetText("Минус ноги и руки");
-          userObj->SetStatus(USER_STATUS_NONE);
-          userObj->SetCurrentMessage(nullptr);
-          field->Destroy();
-          delete field;
-          messageId->SetKeyboard(nullptr);
-          if (userObj->GetCurrentKeyboard())
-            delete userObj->GetCurrentKeyboard();
-          (*userObj)--;
-          EngineInstance->GetBotAPI()->EditMessage(messageId.get());
-        } else {
-          auto keyboard = userObj->GetCurrentKeyboard();
-          auto rows = keyboard->GetRows();
-          char minesAround = field->GetMinesCountAround(x, y);
-          if (rows[x][y].Text == "*") {
-            if (minesAround > 0) {
-              rows[x][y].Text = std::to_string(minesAround);
-            } else {
-              rows[x][y].Text = ".";
-            }
+    game->Open(queryID, messageId, user, x, y);
 
-            keyboard->SetRows(rows);
-            messageId->SetKeyboard(keyboard);
-            EngineInstance->GetBotAPI()->EditMessageKeyboard(messageId.get());
-          }
-        }
-      } else if (userObj->GetCurrentAction() == USER_ACTION_FLAG) {
-        field->Flag(x, y);
-        auto keyboard = userObj->GetCurrentKeyboard();
-        auto rows = keyboard->GetRows();
-        if (field->GetCell(x, y) & FIELD_CELL_FLAG) {
-          rows[x][y].Text = "\U0001F6A9";
-        } else {
-          rows[x][y].Text = "*";
-        }
-        keyboard->SetRows(rows);
-        messageId->SetText(
-            std::format("Разминируйте поле, сапёр. Осталось флагов: {}",
-                        (int)field->GetRemain())
-                .c_str());
-        messageId->SetKeyboard(keyboard);
-
-        EngineInstance->GetBotAPI()->EditMessage(messageId.get());
-      }
-    }
-    if (field->GetRemain() >= 0 && !field->GetSafeRemain()) {
-      messageId->SetText("gj");
-      messageId->SetKeyboard(nullptr);
-      EngineInstance->GetBotAPI()->EditMessage(messageId.get());
-      userObj->SetStatus(USER_STATUS_NONE);
-      userObj->SetCurrentMessage(nullptr);
-      ++(*userObj);
-      if (userObj->GetCurrentKeyboard()) delete userObj->GetCurrentKeyboard();
-      field->Destroy();
-      delete field;
-    }
-    EngineInstance->GetBotAPI()->AnswerCallback(queryID);
   } else if (std::string(message).starts_with("flag") &&
-             FindUser(user->GetID())->GetStatus() ==
-                 USER_STATUS_PLAYING_SINGLE) {
-    FindUser(user->GetID())->SetCurrentAction(USER_ACTION_FLAG);
+             foundUser->GetStatus() == USER_STATUS_PLAYING_SINGLE) {
+    foundUser->SetCurrentAction(USER_ACTION_FLAG);
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "Вы взяли флаг");
   } else if (std::string(message).starts_with("dig") &&
-             FindUser(user->GetID())->GetStatus() ==
-                 USER_STATUS_PLAYING_SINGLE) {
-    FindUser(user->GetID())->SetCurrentAction(USER_ACTION_DIG);
+             foundUser->GetStatus() == USER_STATUS_PLAYING_SINGLE) {
+    foundUser->SetCurrentAction(USER_ACTION_DIG);
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "Вы взяли лопату");
   }
 }
@@ -229,4 +132,5 @@ void Server::OnDisabled() {
     delete user;
   }
   Users.clear();
+  delete game;
 }

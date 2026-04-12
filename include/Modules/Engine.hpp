@@ -5,6 +5,7 @@
 
 #include <Engine/IEngine.hpp>
 #include <Modules/Console.hpp>
+#include <Modules/TaskManager.hpp>
 #include <chrono>
 #include <map>
 #include <thread>
@@ -76,6 +77,8 @@ class ENGINE_EXPORT Engine final : public IEngine {
  private:
   std::chrono::steady_clock::time_point PrepareTick();
   std::chrono::steady_clock::time_point EndTick();
+
+  TaskManager manager{20};
 
   std::map<ModuleID, ModuleInfo> Modules;
   Tick CurrentTime;
