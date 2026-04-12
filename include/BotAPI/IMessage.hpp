@@ -15,7 +15,7 @@ using MID = std::string;
 class ENGINE_EXPORT IMessage {
  public:
   virtual void SetText(const char* text) = 0;
-  virtual char* GetText() const = 0;
+  virtual const char* GetText() const = 0;
 
   virtual void SetKeyboard(IKeyboard* keyboard) = 0;
   virtual MID GetID() const = 0;

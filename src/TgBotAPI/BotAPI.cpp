@@ -76,7 +76,7 @@ void BotAPI::Start() {
   MessagesThreadHandle = std::thread(&BotAPI::MessagesThread, this);
   handler->getEvents().onInlineQuery([&](TgBot::InlineQuery::Ptr query) {
     if (Events) {
-      User* user = new User;
+      auto user = std::make_shared<User>();
       user->GetDataFrom(query->from);
       EngineInstance->GetServer()->OnInlineRequest(query->id.data(),
                                                    query->query.data(), user);
@@ -84,14 +84,12 @@ void BotAPI::Start() {
   });
   handler->getEvents().onCallbackQuery([&](TgBot::CallbackQuery::Ptr query) {
     if (Events) {
-      User* user = new User;
+      auto user = std::make_shared<User>();
       user->GetDataFrom(query->from);
-      Message* message = 0;
+      std::shared_ptr<Message> message = std::make_shared<Message>();
       if (query->message) {
-        message = new Message;
         message->GetDataFrom(query->message);
       } else if (!query->inlineMessageId.empty()) {
-        message = new Message;
         message->SetID(query->inlineMessageId);
         message->SetInline(true);
       }
@@ -102,9 +100,9 @@ void BotAPI::Start() {
   handler->getEvents().onChosenInlineResult(
       [&](TgBot::ChosenInlineResult::Ptr result) {
         if (Events) {
-          User* user = new User;
+          auto user = std::make_shared<User>();
           user->GetDataFrom(result->from);
-          Message* message = new Message;
+          auto message = std::make_shared<Message>();
           message->SetID(result->inlineMessageId);
           message->SetInline(true);
           EngineInstance->GetServer()->OnInlineChosen(
@@ -122,7 +120,9 @@ void BotAPI::Stop() {
   MessagesThreadHandle.join();
 }
 void BotAPI::OnUpdate() {}
-void BotAPI::OnDisabled() { MessagesThreadHandle.join(); }
+void BotAPI::OnDisabled() {
+  if (MessagesThreadHandle.joinable()) MessagesThreadHandle.join();
+}
 
 void BotAPI::SetToken(const char* token) {
   if (Token) delete[] (Token);

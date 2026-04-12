@@ -19,13 +19,16 @@ class Server : public IServer {
   virtual void OnDisabled() override;
 
   virtual void OnInlineRequest(const char* queryID, const char* request,
-                               IUser* sender) override;
+                               std::shared_ptr<IUser> sender) override;
   virtual void OnInlineChosen(const char* queryID, const char* resultID,
-                              IUser* sender, IMessage* message) override;
+                              std::shared_ptr<IUser> sender,
+                              std::shared_ptr<IMessage> message) override;
   virtual void OnCommand(const char* command) override;
   virtual void OnNonCommand(const char* message) override {}
   virtual void OnAnyMessage(const char* message) override {}
-  virtual void OnCallback(const char* queryID, IMessage* messageId, IUser* user,
+  virtual void OnCallback(const char* queryID,
+                          std::shared_ptr<IMessage> messageId,
+                          std::shared_ptr<IUser> user,
                           const char* message) override;
 
   static void SetEngine(IEngine* engine) { EngineInstance = engine; }

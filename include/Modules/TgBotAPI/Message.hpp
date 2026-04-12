@@ -11,11 +11,8 @@ class Message : public IMessage {
  public:
   Message() {}
 
-  virtual void SetText(const char* text) override {
-    Text = new char[strlen(text) + 1];
-    strcpy(Text, text);
-  }
-  virtual char* GetText() const override { return Text; }
+  virtual void SetText(const char* text) override { Text = std::string(text); }
+  virtual const char* GetText() const override { return Text.c_str(); }
 
   virtual void SetKeyboard(IKeyboard* keyboard) override {
     KeyboardD = (Keyboard*)keyboard;
@@ -33,7 +30,7 @@ class Message : public IMessage {
   virtual ~Message() = default;
 
  private:
-  char* Text;
+  std::string Text;
   bool inlineR = false;
   MID ID;
   MID ChatID;

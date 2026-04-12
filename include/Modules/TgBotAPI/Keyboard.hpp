@@ -9,7 +9,6 @@ namespace AS::Engine {
 class Keyboard : public IKeyboard {
  public:
   Keyboard() {}
-  virtual void SetRows(const std::initializer_list<Row>& rows) override;
   virtual void SetRows(const std::vector<RowVec>& rows) override;
   virtual std::vector<RowVec> GetRows() const override { return Rows; }
 

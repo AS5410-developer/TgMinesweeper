@@ -36,6 +36,8 @@ void Launcher::OnUpdate() {
       break;
     }
   }
+  EnginePtr->OnDisabled();
+  delete EnginePtr;
 }
 void Launcher::OnTick() {}
 void Launcher::OnEnabled() {}

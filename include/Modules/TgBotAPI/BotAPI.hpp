@@ -24,6 +24,12 @@ class BotAPI : public IBotAPI {
 
   virtual IKeyboard* GetKeyboard() override { return new Keyboard; }
   virtual IMessage* GetMessage() override { return new Message; }
+  virtual void Free(IKeyboard* ptr) override {
+    delete static_cast<Keyboard*>(ptr);
+  }
+  virtual void Free(IMessage* ptr) override {
+    delete static_cast<Message*>(ptr);
+  }
 
   virtual void AddChoose(std::vector<InlineChoose> chooses) override;
   virtual void EditMessage(IMessage* message) override;

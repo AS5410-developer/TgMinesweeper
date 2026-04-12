@@ -68,8 +68,7 @@ void Engine::OnLoaded() {
   ServerInstance =
       dynamic_cast<IServer*>(GetModuleInfo(result.GetResult())->Module);
 
-  std::thread tickThread([&]() { OnTick(); });
-  tickThread.detach();
+  TicksThread = std::thread(&Engine::OnTick, this);
   ConsoleInstance << "Current engine's address in process virtual memory: "
                   << this << EndLine;
 }
@@ -90,6 +89,7 @@ void Engine::OnUpdate() {
   for (auto& thread : threads) {
     thread.join();
   }
+  threads.clear();
   endTime = EndTick();
   DeltaTime = (float)std::chrono::duration_cast<std::chrono::microseconds>(
                   endTime - startTime)
@@ -125,7 +125,28 @@ void Engine::OnTick() {
   }
 }
 void Engine::OnEnabled() {}
-void Engine::OnDisabled() {}
+void Engine::OnDisabled() {
+  TickInSecond = -1;
+  if (TicksThread.joinable()) TicksThread.join();
+  ConsoleInstance.Clean();
+  for (const auto& [id, info] : Modules) {
+    if (info.Activated) {
+      info.Module->OnDisabled();
+    }
+  }
+  std::vector<ModuleID> ids;
+  for (const auto& [id, info] : Modules) {
+    ids.push_back(id);
+  }
+
+  for (auto id : ids) {
+    if (Modules[id].LoadedByEngine) {
+      UnloadModule(id);
+    } else {
+      RemoveModule(id);
+    }
+  }
+}
 
 void Engine::Quit() {
   if (MainWindow)
@@ -163,6 +184,8 @@ std::vector<ModuleInfo> Engine::GetModules() const {
 void Engine::RemoveModule(ModuleID module) {
   if (!Modules.contains(module)) return;
   DeactivateModule(module);
+  delete Modules[module].Name;
+  delete Modules[module].Module;
   Modules.erase(module);
 }
 
@@ -222,6 +245,8 @@ void Engine::ActivateModule(ModuleID module) {
 }
 void Engine::UnloadModule(ModuleID module) {
   DeactivateModule(module);
+  delete Modules[module].Name;
+  delete Modules[module].Module;
   if (!Modules[module].LoadedByEngine) {
     Modules.erase(module);
     return;

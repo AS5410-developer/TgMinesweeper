@@ -7,6 +7,7 @@ namespace AS::Engine {
 class ENGINE_EXPORT IModule {
  public:
   virtual void OnLoaded() = 0;
+
   virtual void OnRegisterOptions() = 0;
   virtual void OnUpdate() = 0;
   virtual void OnTick() = 0;

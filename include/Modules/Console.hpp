@@ -17,6 +17,8 @@ class ENGINE_EXPORT Console final : public IConsole {
   Console() {}
   Console(IEngine* engine);
 
+  virtual void Clean() override;
+
   virtual void RegisterConVar(IConVar& convar) override;
   virtual void RegisterConCmd(ConCMD& concmd) override;
 

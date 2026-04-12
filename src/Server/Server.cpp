@@ -18,16 +18,17 @@ void Server::OnLoaded() {
 }
 
 void Server::OnInlineChosen(const char* queryID, const char* resultID,
-                            IUser* sender, IMessage* message) {
-  CheckIsNew(sender);
+                            std::shared_ptr<IUser> sender,
+                            std::shared_ptr<IMessage> message) {
+  CheckIsNew(sender.get());
   if (FindUser(sender->GetID())->GetStatus() != USER_STATUS_NONE) return;
   FindUser(sender->GetID())->SetStatus(USER_STATUS_WAITING);
   FindUser(sender->GetID())->SetCurrentMessage(message);
 }
 
 void Server::OnInlineRequest(const char* queryID, const char* request,
-                             IUser* sender) {
-  CheckIsNew(sender);
+                             std::shared_ptr<IUser> sender) {
+  CheckIsNew(sender.get());
   if (FindUser(sender->GetID())->GetStatus() != USER_STATUS_NONE) {
     auto message = EngineInstance->GetBotAPI()->GetMessage();
 
@@ -55,16 +56,27 @@ void Server::OnInlineRequest(const char* queryID, const char* request,
         .title = "Indev",
         .description = "Play indev minesweeper2D",
         .message = message}});
+
+  EngineInstance->GetBotAPI()->Free(keyboard);
+  EngineInstance->GetBotAPI()->Free(message);
 }
-void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
-                        const char* message) {
-  CheckIsNew(user);
-  if (!FindUser(user->GetID())->GetCurrentMessage()) {
+void Server::OnCallback(const char* queryID,
+                        std::shared_ptr<IMessage> messageId,
+                        std::shared_ptr<IUser> user, const char* message) {
+  if (!user || !messageId) return;
+  CheckIsNew(user.get());
+  User* foundUser = static_cast<User*>(FindUser(user->GetID()));
+
+  if (!foundUser) {
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "не твоя кнопка");
     return;
   }
-  if (FindUser(user->GetID())->GetCurrentMessage()->GetID() !=
-      messageId->GetID()) {
+
+  if (!foundUser->GetCurrentMessage()) {
+    EngineInstance->GetBotAPI()->AnswerCallback(queryID, "не твоя кнопка");
+    return;
+  }
+  if (foundUser->GetCurrentMessage()->GetID() != messageId->GetID()) {
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "не твоя кнопка");
     return;
   }
@@ -97,7 +109,7 @@ void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
     keyboard->SetRows(fieldKeyboard);
     FindUser(user->GetID())->SetCurrentKeyboard(keyboard);
     messageId->SetKeyboard(keyboard);
-    EngineInstance->GetBotAPI()->EditMessage(messageId);
+    EngineInstance->GetBotAPI()->EditMessage(messageId.get());
   } else if (!strcmp(message, "minus_level")) {
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "-левел за трусость");
     auto userObj = FindUser(user->GetID());
@@ -109,7 +121,7 @@ void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
     messageId->SetText("беги беги, трус");
     auto keyboard = EngineInstance->GetBotAPI()->GetKeyboard();
     messageId->SetKeyboard(nullptr);
-    EngineInstance->GetBotAPI()->EditMessage(messageId);
+    EngineInstance->GetBotAPI()->EditMessage(messageId.get());
   } else if (std::string(message).starts_with("open_") &&
              FindUser(user->GetID())->GetStatus() ==
                  USER_STATUS_PLAYING_SINGLE) {
@@ -124,10 +136,13 @@ void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
           messageId->SetText("Минус ноги и руки");
           userObj->SetStatus(USER_STATUS_NONE);
           userObj->SetCurrentMessage(nullptr);
+          field->Destroy();
           delete field;
           messageId->SetKeyboard(nullptr);
+          if (userObj->GetCurrentKeyboard())
+            delete userObj->GetCurrentKeyboard();
           (*userObj)--;
-          EngineInstance->GetBotAPI()->EditMessage(messageId);
+          EngineInstance->GetBotAPI()->EditMessage(messageId.get());
         } else {
           auto keyboard = userObj->GetCurrentKeyboard();
           auto rows = keyboard->GetRows();
@@ -141,7 +156,7 @@ void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
 
             keyboard->SetRows(rows);
             messageId->SetKeyboard(keyboard);
-            EngineInstance->GetBotAPI()->EditMessageKeyboard(messageId);
+            EngineInstance->GetBotAPI()->EditMessageKeyboard(messageId.get());
           }
         }
       } else if (userObj->GetCurrentAction() == USER_ACTION_FLAG) {
@@ -160,16 +175,18 @@ void Server::OnCallback(const char* queryID, IMessage* messageId, IUser* user,
                 .c_str());
         messageId->SetKeyboard(keyboard);
 
-        EngineInstance->GetBotAPI()->EditMessage(messageId);
+        EngineInstance->GetBotAPI()->EditMessage(messageId.get());
       }
     }
     if (field->GetRemain() >= 0 && !field->GetSafeRemain()) {
       messageId->SetText("gj");
       messageId->SetKeyboard(nullptr);
-      EngineInstance->GetBotAPI()->EditMessage(messageId);
+      EngineInstance->GetBotAPI()->EditMessage(messageId.get());
       userObj->SetStatus(USER_STATUS_NONE);
       userObj->SetCurrentMessage(nullptr);
       ++(*userObj);
+      if (userObj->GetCurrentKeyboard()) delete userObj->GetCurrentKeyboard();
+      field->Destroy();
       delete field;
     }
     EngineInstance->GetBotAPI()->AnswerCallback(queryID);
@@ -193,7 +210,7 @@ void Server::OnCommand(const char* command) {
     auto pos = str.find(' ');
     if (pos != std::string::npos) {
       auto command = str.substr(pos + 1);
-      EngineInstance->GetConsole().ExecuteCommand(command);
+      delete EngineInstance->GetConsole().ExecuteCommand(command);
     }
   }
 }
@@ -207,4 +224,9 @@ void Server::OnRegisterOptions() {}
 void Server::OnUpdate() {}
 void Server::OnTick() {}
 void Server::OnEnabled() {}
-void Server::OnDisabled() {}
+void Server::OnDisabled() {
+  for (auto& [id, user] : Users) {
+    delete user;
+  }
+  Users.clear();
+}

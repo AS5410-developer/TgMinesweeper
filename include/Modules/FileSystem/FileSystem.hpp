@@ -19,12 +19,13 @@ class FileSystem : public IFileSystem {
   static void SetEngine(IEngine* engine) { EngineInstance = engine; }
   static IEngine* GetEngine() { return EngineInstance; }
 
-  virtual char* GetGamePath() const override { return GamePath; }
-  virtual char* GetExecutablePath() const override { return ExePath; }
-  virtual char* GetBinPath() const override { return BinPath; }
+  virtual std::string GetGamePath() const override { return GamePath; }
+  virtual std::string GetExecutablePath() const override { return ExePath; }
+  virtual std::string GetBinPath() const override { return BinPath; }
 
   virtual void SetupGamePath(const char* gameDir) override;
-  virtual char* GetPath(const char* path, unsigned long pathType) override;
+  virtual std::string GetPath(const char* path,
+                              unsigned long pathType) override;
 
   virtual IFile* CreateFile() override;
   virtual bool FileExists(const char* path, unsigned long pathType) override;
@@ -33,9 +34,9 @@ class FileSystem : public IFileSystem {
 
  private:
   static IEngine* EngineInstance;
-  char* GamePath = 0;
-  char* ExePath = 0;
-  char* BinPath = 0;
+  std::string GamePath;
+  std::string ExePath;
+  std::string BinPath;
 };
 }  // namespace AS::Engine
 

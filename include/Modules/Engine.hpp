@@ -7,6 +7,7 @@
 #include <Modules/Console.hpp>
 #include <chrono>
 #include <map>
+#include <thread>
 
 namespace AS::Engine {
 
@@ -87,6 +88,7 @@ class ENGINE_EXPORT Engine final : public IEngine {
   IBotAPI* BotAPIInstance;
   IServer* ServerInstance;
   Console ConsoleInstance;
+  std::thread TicksThread;
   ILauncher* LauncherInstance;
 };
 }  // namespace AS::Engine

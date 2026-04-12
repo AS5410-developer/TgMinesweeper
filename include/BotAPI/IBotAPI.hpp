@@ -23,6 +23,8 @@ class ENGINE_EXPORT IBotAPI : public IModule {
  public:
   virtual IKeyboard* GetKeyboard() = 0;
   virtual IMessage* GetMessage() = 0;
+  virtual void Free(IKeyboard* ptr) = 0;
+  virtual void Free(IMessage* ptr) = 0;
 
   virtual void AddChoose(std::vector<InlineChoose> chooses) = 0;
   virtual void EditMessage(IMessage* message) = 0;

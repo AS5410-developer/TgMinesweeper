@@ -11,13 +11,13 @@
 #include <vector>
 
 namespace AS::Engine {
-using UID = unsigned long long;
+using UID = long long;
 class ENGINE_EXPORT IUser {
  public:
   virtual UID GetID() const = 0;
-  virtual char* GetFirstName() const = 0;
-  virtual char* GetLastName() const = 0;
-  virtual char* GetUserName() const = 0;
+  virtual const char* GetFirstName() const = 0;
+  virtual const char* GetLastName() const = 0;
+  virtual const char* GetUserName() const = 0;
   virtual bool IsBot() const = 0;
 
   virtual ~IUser() = default;

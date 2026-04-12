@@ -21,6 +21,8 @@ class ENGINE_EXPORT IConsole {
  public:
   typedef void (*FlushHandler)(const std::string&);
 
+  virtual void Clean() = 0;
+
   virtual void RegisterConVar(IConVar& convar) = 0;
   virtual void RegisterConCmd(ConCMD& concmd) = 0;
 

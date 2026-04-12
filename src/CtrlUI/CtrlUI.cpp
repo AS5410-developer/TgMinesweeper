@@ -6,12 +6,13 @@
 using namespace AS::Engine;
 
 IEngine* CtrlUI::EngineInstance = 0;
-std::string buffer;
+std::string buffer = "";
 WINDOW* win;
 WINDOW* modulesSubwin;
 WINDOW* consoleSubwin;
 WINDOW* consoleText;
 bool enteringCommand = false;
+std::mutex consoleMutex;
 
 void SetModulesSubwinLayout(WINDOW* win) {
   box(win, 0, 0);
@@ -19,8 +20,9 @@ void SetModulesSubwinLayout(WINDOW* win) {
   IEngine* engine = CtrlUI::GetEngine();
   auto modules = engine->GetModules();
   for (size_t i = 0; i < modules.size() && i < LINES - 5; i++) {
-    mvwprintw(win, i + 1, 1, "(%llu) %s [%s]", modules[i].ID,
-              modules[i].Name->c_str(), modules[i].Activated ? "ON" : "OFF");
+    if (modules[i].Name)
+      mvwprintw(win, i + 1, 1, "(%llu) %s [%s]", modules[i].ID,
+                modules[i].Name->c_str(), modules[i].Activated ? "ON" : "OFF");
   }
   wrefresh(win);
 }
@@ -28,7 +30,7 @@ void SetModulesSubwinLayout(WINDOW* win) {
 void SetConsoleLayout(WINDOW* win, std::string& text) {
   box(win, 0, 0);
   mvwprintw(win, 0, 2, "Console");
-  mvwprintw(consoleText, 0, 0, "%s", text.c_str());
+  mvwaddnstr(consoleText, 0, 0, text.c_str(), -1);
   wrefresh(win);
 }
 
@@ -43,12 +45,7 @@ void SetDefaultWindowLayout(WINDOW* win, WINDOW* modulesSubwin,
   wmove(win, LINES - 2, 10);
 }
 
-void Handler(const std::string& text) {
-  wclear(consoleSubwin);
-  buffer.append(text);
-  SetConsoleLayout(consoleSubwin, buffer);
-  wrefresh(win);
-}
+void Handler(const std::string& text) { buffer.append(text); }
 
 void Clear(int argc, char** argv) {
   buffer.clear();
@@ -65,48 +62,56 @@ void CtrlUI::OnLoaded() {
 }
 void CtrlUI::OnRegisterOptions() {}
 void CtrlUI::OnUpdate() {}
-void CtrlUI::OnTick() {
-  if (!(EngineInstance->GetCurrentTime() % 128)) {
-    wclear(modulesSubwin);
-    SetModulesSubwinLayout(modulesSubwin);
-    wrefresh(win);
-  }
-}
+void CtrlUI::OnTick() {}
 void CtrlUI::OnEnabled() {}
-void CtrlUI::OnDisabled() { UIThread.join(); }
+void CtrlUI::OnDisabled() {
+  if (UIThread.joinable()) UIThread.join();
+}
 
 void Init() {
   initscr();
+  setlocale(LC_ALL, "");
   raw();
   clear();
   noecho();
   cbreak();
   curs_set(0);
 }
-void Destroy() {
-  clrtoeol();
-  endwin();
-}
-
 void ClearAll() {
   wclear(win);
   wclear(modulesSubwin);
   wclear(consoleSubwin);
   wclear(consoleText);
 }
+void Destroy() {
+  ClearAll();
+  delwin(consoleText);
+  delwin(consoleSubwin);
+  delwin(modulesSubwin);
+  delwin(win);
+  curs_set(1);
+  clrtoeol();
+  buffer.shrink_to_fit();
+  endwin();
+  exit_curses(0);
+}
+
 void RecreateConsole() {
   delwin(consoleText);
   delwin(consoleSubwin);
   consoleSubwin = subwin(win, LINES - 3, (COLS / 2) - 1, 1, COLS / 2);
   consoleText = derwin(consoleSubwin, LINES - 5, (COLS / 2) - 3, 1, 1);
+  scrollok(consoleText, TRUE);
 }
 void RefreshAll() {
+  consoleMutex.lock();
   ClearAll();
   RecreateConsole();
   wresize(win, LINES, COLS);
   wresize(modulesSubwin, LINES - 3, (COLS / 2) - 1);
   SetDefaultWindowLayout(win, modulesSubwin, consoleSubwin);
   wrefresh(win);
+  consoleMutex.unlock();
 }
 
 void CtrlUI::UIThreadFunc() {
@@ -115,12 +120,16 @@ void CtrlUI::UIThreadFunc() {
   modulesSubwin = subwin(win, LINES - 3, (COLS / 2) - 1, 1, 1);
   consoleSubwin = subwin(win, LINES - 3, (COLS / 2) - 1, 1, COLS / 2);
   consoleText = derwin(consoleSubwin, LINES - 5, (COLS / 2) - 3, 1, 1);
+  wtimeout(win, 100);
   scrollok(consoleText, TRUE);
   keypad(win, TRUE);
+  consoleMutex.lock();
   SetDefaultWindowLayout(win, modulesSubwin, consoleSubwin);
+  consoleMutex.unlock();
   refresh();
+  wrefresh(win);
+  unsigned long long lastBufferSize = 0;
   while (EngineInstance->GetTickrate() != -1) {
-    wrefresh(win);
     int key = wgetch(win);
     if (key == KEY_RESIZE) {
       RefreshAll();
@@ -130,6 +139,8 @@ void CtrlUI::UIThreadFunc() {
       break;
       //} else if (key == KEY_F(1)) {
     } else if (key == 'k') {
+      wrefresh(win);
+      wtimeout(win, -1);
       enteringCommand = true;
       curs_set(1);
       echo();
@@ -140,7 +151,20 @@ void CtrlUI::UIThreadFunc() {
       enteringCommand = false;
       RefreshAll();
       if (strlen(commandBuffer) <= 0) continue;
-      EngineInstance->GetConsole().ExecuteCommand(commandBuffer);
+      delete EngineInstance->GetConsole().ExecuteCommand(commandBuffer);
+      wtimeout(win, 100);
+    }
+
+    if (buffer.size() != lastBufferSize) {
+      consoleMutex.lock();
+      wclear(modulesSubwin);
+      SetModulesSubwinLayout(modulesSubwin);
+      wrefresh(modulesSubwin);
+      wclear(consoleSubwin);
+      SetConsoleLayout(consoleSubwin, buffer);
+      wrefresh(consoleSubwin);
+      lastBufferSize = buffer.size();
+      consoleMutex.unlock();
     }
   }
   Destroy();

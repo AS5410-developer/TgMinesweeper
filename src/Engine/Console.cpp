@@ -17,6 +17,13 @@ Console::Console(IEngine* engine) {
   Buffer->SetResource(buffer);
 }
 
+void Console::Clean() {
+  if (Buffer)
+    Buffer->StartWorkWithRes([](void* pointer) {
+      if (pointer) delete static_cast<std::string*>(pointer);
+    });
+}
+
 void Console::RegisterConVar(IConVar& convar) {
   Convars[convar.GetName()] = &convar;
 }
@@ -24,67 +31,69 @@ void Console::RegisterConCmd(ConCMD& concmd) { Concmds[concmd.Name] = &concmd; }
 
 const IError* Console::ExecuteCommand(const std::string& command) {
   if (command.empty()) return new ErrorSuccess;
-  const char* commandEnd = command.c_str();
-  char* oneCommand = new char[512];
-  unsigned int size = 0;
-  bool sem = 0;
-  while (*commandEnd != 0) {
-    if (*commandEnd == '\"') {
-      sem = !sem;
-    }
-    oneCommand[size] = *commandEnd;
-    commandEnd++;
-    size++;
-    if (sem) continue;
-    if (*commandEnd == ';') break;
-  }
-  oneCommand[size] = '\0';
-  std::vector<char*> args;
-  int last = 0;
 
-  for (unsigned int i = 0; i < size; i++) {
-    if (oneCommand[i] == '\"') {
-      if (sem) {
-        oneCommand[i + 1] = '\0';
-        args.push_back(oneCommand + last);
-        last = i + 1;
+  unsigned long long pos = 0;
+  unsigned long long lastPos = 0;
+  while (command.length() > pos) {
+    bool quote = 0;
+    lastPos = pos;
+    unsigned long long i = pos;
+    for (; i < command.length(); i++) {
+      if (command[i] == '\"') quote = !quote;
+      if ((command[i] == ';' || command[i] == '\n') && !quote) {
+        pos = i + 1;
+        break;
       }
-      sem = !sem;
-      continue;
     }
-    if (sem) continue;
-    if (oneCommand[i + 1] == ' ' || oneCommand[i + 1] == 0) {
-      oneCommand[i + 1] = '\0';
-      args.push_back(oneCommand + last);
-      last = i + 2;
-      ++i;
-      continue;
+    if (i == command.length())
+      pos = i;
+    else
+      pos = (i < command.length()) ? i + 1 : command.length();
+    if (quote) {
+      *this << "Syntax error" << EndLine;
+      break;
     }
-  }
+    std::string oneCommand = command.substr(lastPos, i - lastPos);
+    std::vector<std::string> args;
+    std::string arg;
 
-  if (Convars.contains(std::string(args[0]))) {
-    IConVar* convar = Convars[std::string(args[0])];
-    if (args.size() == 1) {
-      *this << convar->Get() << EndLine;
-      goto clean;
+    for (i = 0; i < oneCommand.length(); i++) {
+      if (oneCommand[i] == '\"') {
+        quote = !quote;
+        continue;
+      }
+      if (std::isspace(oneCommand[i]) && !quote && !arg.empty()) {
+        args.push_back(arg);
+        arg.clear();
+      } else
+        arg += oneCommand[i];
     }
-    std::string value;
-    for (size_t i = 1; i < args.size(); i++) {
-      value.append(args[i]);
-      if (i != args.size() - 1) value.append(" ");
-    }
-    convar->Set(value);
-    goto clean;
-  }
-  if (Concmds.contains(std::string(args[0]))) {
-    ConCMD* concmd = Concmds[std::string(args[0])];
-    concmd->Func(args.size(), args.data());
-    goto clean;
-  }
+    if (!arg.empty()) args.push_back(arg);
 
-  *this << "Unknown command or convar: " << args[0] << EndLine;
-clean:
-  delete[] oneCommand;
+    if (args.empty()) continue;
+
+    if (Convars.contains(std::string(args[0]))) {
+      IConVar* convar = Convars[std::string(args[0])];
+      if (args.size() == 1) {
+        *this << convar->Get() << EndLine;
+        continue;
+      }
+      std::string value;
+      for (size_t i = 1; i < args.size(); i++) {
+        value.append(args[i]);
+        if (i != args.size() - 1) value.append(" ");
+      }
+      convar->Set(value);
+      continue;
+    } else if (Concmds.contains(std::string(args[0]))) {
+      ConCMD* concmd = Concmds[std::string(args[0])];
+      std::vector<char*> c_args;
+      for (auto& s : args) c_args.push_back(s.data());
+      concmd->Func(c_args.size(), c_args.data());
+      continue;
+    } else
+      *this << "Unknown command or convar: " << args[0] << EndLine;
+  }
   return new ErrorSuccess;
 }
 const IError* Console::Execute(const std::string& filePath) { return 0; }

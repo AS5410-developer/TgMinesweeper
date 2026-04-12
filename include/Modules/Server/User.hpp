@@ -18,8 +18,8 @@ class User final {
   User() {}
   User(AS::Engine::IUser* tgUser) : TgUser(tgUser) {}
 
-  void SetTgUser(AS::Engine::IUser* user) { TgUser = user; }
-  AS::Engine::IUser* GetTgUser() { return TgUser; }
+  void SetTgUser(std::shared_ptr<AS::Engine::IUser>& user) { TgUser = user; }
+  std::shared_ptr<AS::Engine::IUser> GetTgUser() { return TgUser; }
 
   void SetStatus(UserStatus status) { Status = status; }
   UserStatus GetStatus() { return Status; }
@@ -40,21 +40,23 @@ class User final {
   void SetCurrentAction(UserAction action) { CurrentAction = action; }
   UserAction GetCurrentAction() { return CurrentAction; }
 
-  void SetCurrentMessage(AS::Engine::IMessage* message) {
+  void SetCurrentMessage(std::shared_ptr<AS::Engine::IMessage> message) {
     CurrentMessage = message;
   }
-  AS::Engine::IMessage* GetCurrentMessage() { return CurrentMessage; }
+  std::shared_ptr<AS::Engine::IMessage> GetCurrentMessage() {
+    return CurrentMessage;
+  }
 
   virtual ~User() = default;
 
  private:
-  AS::Engine::IUser* TgUser;
+  std::shared_ptr<AS::Engine::IUser> TgUser;
   UserStatus Status = USER_STATUS_NONE;
   long long Level = 0;
   AS::Engine::IKeyboard* CurrentKeyboard = 0;
   Field* CurrentField = 0;
   UserAction CurrentAction = USER_ACTION_DIG;
-  AS::Engine::IMessage* CurrentMessage = 0;
+  std::shared_ptr<AS::Engine::IMessage> CurrentMessage = 0;
 };
 
 #endif

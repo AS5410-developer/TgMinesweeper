@@ -11,9 +11,11 @@ class User : public IUser {
   User() {}
 
   virtual UID GetID() const override { return ID; }
-  virtual char* GetFirstName() const override { return FirstName; }
-  virtual char* GetLastName() const override { return LastName; }
-  virtual char* GetUserName() const override { return UserName; }
+  virtual const char* GetFirstName() const override {
+    return FirstName.c_str();
+  }
+  virtual const char* GetLastName() const override { return LastName.c_str(); }
+  virtual const char* GetUserName() const override { return UserName.c_str(); }
   virtual bool IsBot() const override { return IsBotFlag; }
 
   virtual void GetDataFrom(TgBot::User::Ptr tgUser);
@@ -22,9 +24,9 @@ class User : public IUser {
 
  private:
   UID ID = 0;
-  char* FirstName;
-  char* LastName = 0;
-  char* UserName = 0;
+  std::string FirstName;
+  std::string LastName;
+  std::string UserName;
   bool IsBotFlag = false;
 };
 }  // namespace AS::Engine
