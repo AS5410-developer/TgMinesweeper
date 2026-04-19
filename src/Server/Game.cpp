@@ -7,6 +7,10 @@ void Game::Start(const char* queryID,
   auto Server = AS::Engine::Server::GetServer();
   auto keyboard = EngineInstance->GetBotAPI()->GetKeyboard();
   auto userObj = Server->FindUser(user->GetID());
+  if (!userObj || !messageId || !keyboard) {
+    if (keyboard) delete keyboard;
+    return;
+  }
 
   EngineInstance->GetBotAPI()->AnswerCallback(queryID);
 
@@ -49,9 +53,10 @@ void Game::End(const char* queryID,
   auto EngineInstance = AS::Engine::Server::GetEngine();
   auto Server = AS::Engine::Server::GetServer();
 
+  if (!messageId) return;
   EngineInstance->GetBotAPI()->AnswerCallback(queryID, "-левел за трусость");
   auto userObj = Server->FindUser(user->GetID());
-  auto keyboard = EngineInstance->GetBotAPI()->GetKeyboard();
+  if (!userObj) return;
 
   messageId->SetText("беги беги, трус");
   messageId->SetKeyboard(nullptr);
@@ -67,6 +72,7 @@ void Game::Win(const char* queryID,
   auto EngineInstance = AS::Engine::Server::GetEngine();
   auto Server = AS::Engine::Server::GetServer();
   auto userObj = Server->FindUser(user->GetID());
+  if (!userObj || !messageId) return;
 
   messageId->SetText("gj");
   messageId->SetKeyboard(nullptr);
@@ -77,12 +83,27 @@ void Game::Win(const char* queryID,
 }
 void Game::Open(const char* queryID,
                 std::shared_ptr<AS::Engine::IMessage> messageId,
-                std::shared_ptr<AS::Engine::IUser> user, char x, char y) {
+                std::shared_ptr<AS::Engine::IUser> user, unsigned char x,
+                unsigned char y) {
   auto EngineInstance = AS::Engine::Server::GetEngine();
   auto Server = AS::Engine::Server::GetServer();
   auto userObj = Server->FindUser(user->GetID());
+  if (!userObj || !messageId) return;
   auto field = userObj->GetCurrentField();
+  if (!field) {
+    EngineInstance->GetBotAPI()->AnswerCallback(queryID, "чо сломать хочешь?");
+    return;
+  }
   auto keyboard = userObj->GetCurrentKeyboard();
+  if (!keyboard) {
+    EngineInstance->GetBotAPI()->AnswerCallback(queryID, "чо сломать хочешь?");
+    return;
+  }
+
+  if (x >= field->GetWidth() || y >= field->GetHeight()) {
+    EngineInstance->GetBotAPI()->AnswerCallback(queryID, "чо сломать хочешь?");
+    return;
+  }
 
   if (!field->IsOpened(x, y)) {
     if (!field->IsFlagged(x, y) &&
@@ -97,7 +118,7 @@ void Game::Open(const char* queryID,
       } else {
         auto rows = keyboard->GetRows();
         char minesAround = field->GetMinesCountAround(x, y);
-        if (rows[x][y].Text == "*") {
+        if (x < rows.size() && y < rows[x].size() && rows[x][y].Text == "*") {
           if (minesAround > 0) {
             rows[x][y].Text = std::to_string(minesAround);
           } else {
@@ -115,9 +136,13 @@ void Game::Open(const char* queryID,
 
       auto rows = keyboard->GetRows();
       if (field->GetCell(x, y) & FIELD_CELL_FLAG) {
-        rows[x][y].Text = "\U0001F6A9";
+        if (x < rows.size() && y < rows[x].size()) {
+          rows[x][y].Text = "\U0001F6A9";
+        }
       } else {
-        rows[x][y].Text = "*";
+        if (x < rows.size() && y < rows[x].size()) {
+          rows[x][y].Text = "*";
+        }
       }
 
       keyboard->SetRows(rows);

@@ -47,6 +47,7 @@ class ENGINE_EXPORT Engine final : public IEngine {
   virtual IFileSystem& GetFileSystem() override { return *FilesystemInstance; }
   virtual IServer* GetServer() override { return ServerInstance; };
   virtual IBotAPI* GetBotAPI() override { return BotAPIInstance; }
+  virtual ITaskManager& GetTaskManager() override { return Manager; }
 
   virtual WindowSize GetWindowSize() const override {
     return MainWindow->GetSize();
@@ -78,7 +79,7 @@ class ENGINE_EXPORT Engine final : public IEngine {
   std::chrono::steady_clock::time_point PrepareTick();
   std::chrono::steady_clock::time_point EndTick();
 
-  TaskManager manager{20};
+  TaskManager Manager{20};
 
   std::map<ModuleID, ModuleInfo> Modules;
   Tick CurrentTime;

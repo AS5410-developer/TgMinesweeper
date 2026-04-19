@@ -4,8 +4,7 @@ using namespace AS::Engine;
 
 Mutex::Mutex() {}
 void Mutex::StartWorkWithRes(std::function<void(void*)> func) {
+  std::lock_guard<std::recursive_mutex> lock(Mut);
   if (!Resource) return;
-  if (!Mut.try_lock()) return;
   func(Resource);
-  Mut.unlock();
 }

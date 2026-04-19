@@ -4,6 +4,7 @@
 #include <engine_export.h>
 
 #include <Engine/IEngine.hpp>
+#include <Engine/ITaskManager.hpp>
 #include <Modules/Console.hpp>
 #include <barrier>
 #include <chrono>
@@ -13,23 +14,16 @@
 
 namespace AS::Engine {
 
-using TaskFunc = std::function<void()>;
-
-struct Task {
-  TaskFunc Function;
-  bool RunNotE;
-};
-
-class TaskManager final {
+class TaskManager final : public ITaskManager {
  public:
   TaskManager(unsigned char count);
 
-  void AllowExecOnAdd(bool allow = true) { AutoExec = allow; }
+  virtual void AllowExecOnAdd(bool allow = true) override { AutoExec = allow; }
 
-  void AddTask(Task& task);
+  virtual void AddTask(Task& task) override;
 
-  void ExecuteAll();
-  void WaitForExecution();
+  virtual void ExecuteAll() override;
+  virtual void WaitForExecution() override;
 
   virtual ~TaskManager() {
     Destroy = true;

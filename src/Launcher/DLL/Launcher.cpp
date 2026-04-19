@@ -48,7 +48,7 @@ void Launcher::LaunchFailed(const char* reason, ...) {
   va_start(args, reason);
 
   fprintf(stderr, "FATAL LAUNCH ERROR: ");
-  fprintf(stderr, reason, args);
+  vfprintf(stderr, reason, args);
   fprintf(stderr, "\n");
 
   Failed = true;

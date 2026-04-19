@@ -69,11 +69,15 @@ void Field::Flag(unsigned char x, unsigned char y) {
 }
 char Field::GetMinesCountAround(unsigned char x, unsigned char y) {
   if (!Inited) return 0;
-  char count = 0;
-  for (char i = -1; i <= 1; i++) {
-    for (char j = -1; j <= 1; j++) {
-      if (x + i < Width && y + j < Height && x + i >= 0 && y + j >= 0) {
-        if (FIELD_CELL_IS(GetCell(x + i, y + j), FIELD_CELL_MINE)) {
+  unsigned char count = 0;
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      int nx = static_cast<int>(x) + i;
+      int ny = static_cast<int>(y) + j;
+      if (nx >= 0 && nx < Width && ny >= 0 && ny < Height) {
+        if (FIELD_CELL_IS(GetCell(static_cast<unsigned char>(nx),
+                                  static_cast<unsigned char>(ny)),
+                           FIELD_CELL_MINE)) {
           count++;
         }
       }

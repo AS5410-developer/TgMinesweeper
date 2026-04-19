@@ -3,9 +3,10 @@
 using namespace AS::Engine;
 
 void Message::GetDataFrom(TgBot::Message::Ptr tgMessage) {
-  Text = std::string(tgMessage->text);
+  Text = !tgMessage->text.empty() ? tgMessage->text : std::string();
 
   ID = std::to_string(tgMessage->messageId);
-  ChatID = tgMessage->chat->id;
+  ChatID =
+      tgMessage->chat ? std::to_string(tgMessage->chat->id) : std::string();
   KeyboardD = nullptr;
 }

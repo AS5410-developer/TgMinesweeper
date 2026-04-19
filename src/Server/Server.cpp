@@ -24,7 +24,8 @@ void Server::OnLoaded() {
 void Server::OnInlineChosen(const char* queryID, const char* resultID,
                             std::shared_ptr<IUser> sender,
                             std::shared_ptr<IMessage> message) {
-  CheckIsNew(sender.get());
+  if (!sender || !message) return;
+  CheckIsNew(sender);
   if (FindUser(sender->GetID())->GetStatus() != USER_STATUS_NONE) return;
   FindUser(sender->GetID())->SetStatus(USER_STATUS_WAITING);
   FindUser(sender->GetID())->SetCurrentMessage(message);
@@ -32,7 +33,8 @@ void Server::OnInlineChosen(const char* queryID, const char* resultID,
 
 void Server::OnInlineRequest(const char* queryID, const char* request,
                              std::shared_ptr<IUser> sender) {
-  CheckIsNew(sender.get());
+  if (!sender) return;
+  CheckIsNew(sender);
   if (FindUser(sender->GetID())->GetStatus() != USER_STATUS_NONE) {
     auto message = EngineInstance->GetBotAPI()->GetMessage();
 
@@ -68,7 +70,7 @@ void Server::OnCallback(const char* queryID,
                         std::shared_ptr<IMessage> messageId,
                         std::shared_ptr<IUser> user, const char* message) {
   if (!user || !messageId) return;
-  CheckIsNew(user.get());
+  CheckIsNew(user);
   User* foundUser = static_cast<User*>(FindUser(user->GetID()));
 
   if (!foundUser) {
@@ -76,6 +78,10 @@ void Server::OnCallback(const char* queryID,
     return;
   }
   if (!foundUser->GetCurrentMessage()) {
+    EngineInstance->GetBotAPI()->AnswerCallback(queryID, "не твоя кнопка");
+    return;
+  }
+  if (!message || !*message) {
     EngineInstance->GetBotAPI()->AnswerCallback(queryID, "не твоя кнопка");
     return;
   }
@@ -92,8 +98,17 @@ void Server::OnCallback(const char* queryID,
   } else if (std::string(message).starts_with("open_") &&
              foundUser->GetStatus() == USER_STATUS_PLAYING_SINGLE) {
     int x, y;
-    sscanf(message, "open_%d_%d", &x, &y);
-    game->Open(queryID, messageId, user, x, y);
+    if (sscanf(message, "open_%d_%d", &x, &y) != 2) {
+      EngineInstance->GetBotAPI()->AnswerCallback(queryID,
+                                                  "чо сломать хочешь?");
+      return;
+    }
+    if (x < 0 || x >= 256 || y < 0 || y >= 256) {
+      EngineInstance->GetBotAPI()->AnswerCallback(queryID,
+                                                  "чо сломать хочешь?");
+      return;
+    }
+    game->Open(queryID, messageId, user, (unsigned char)x, (unsigned char)y);
 
   } else if (std::string(message).starts_with("flag") &&
              foundUser->GetStatus() == USER_STATUS_PLAYING_SINGLE) {
@@ -117,7 +132,9 @@ void Server::OnCommand(const char* command) {
     }
   }
 }
-void Server::CheckIsNew(IUser* tgUser) {
+void Server::CheckIsNew(std::shared_ptr<IUser> tgUser) {
+  if (!tgUser) return;
+  std::lock_guard<std::recursive_mutex> lock(UserWork);
   if (!FindUser(tgUser->GetID())) {
     Users[tgUser->GetID()] = new User(tgUser);
   }
@@ -128,6 +145,7 @@ void Server::OnUpdate() {}
 void Server::OnTick() {}
 void Server::OnEnabled() {}
 void Server::OnDisabled() {
+  std::lock_guard<std::recursive_mutex> lock(UserWork);
   for (auto& [id, user] : Users) {
     delete user;
   }

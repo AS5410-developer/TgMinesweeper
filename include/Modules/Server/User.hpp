@@ -16,9 +16,11 @@ enum UserAction { USER_ACTION_DIG, USER_ACTION_FLAG };
 class User final {
  public:
   User() {}
-  User(AS::Engine::IUser* tgUser) : TgUser(tgUser) {}
+  User(const std::shared_ptr<AS::Engine::IUser>& tgUser) : TgUser(tgUser) {}
 
-  void SetTgUser(std::shared_ptr<AS::Engine::IUser>& user) { TgUser = user; }
+  void SetTgUser(const std::shared_ptr<AS::Engine::IUser>& user) {
+    TgUser = user;
+  }
   std::shared_ptr<AS::Engine::IUser> GetTgUser() { return TgUser; }
 
   void SetStatus(UserStatus status) { Status = status; }

@@ -74,15 +74,28 @@ void BotAPI::Start() {
   Runned = true;
   handler->getApi().deleteWebhook(true);
   MessagesThreadHandle = std::thread(&BotAPI::MessagesThread, this);
-  handler->getEvents().onInlineQuery([&](TgBot::InlineQuery::Ptr query) {
+  handler->getEvents().onInlineQuery([this](TgBot::InlineQuery::Ptr query) {
     if (Events) {
       auto user = std::make_shared<User>();
       user->GetDataFrom(query->from);
-      EngineInstance->GetServer()->OnInlineRequest(query->id.data(),
-                                                   query->query.data(), user);
+
+      Task task = {.Function =
+                       [this, query, user]() {
+                         try {
+                           EngineInstance->GetServer()->OnInlineRequest(
+                               query->id.data(), query->query.data(), user);
+                         } catch (std::exception& e) {
+                           EngineInstance->GetConsole()
+                               << "TgBotAPI: Some error in server event (maybe "
+                                  "tg api error): "
+                               << e.what() << EndLine;
+                         }
+                       },
+                   .RunNotE = false};
+      EngineInstance->GetTaskManager().AddTask(task);
     }
   });
-  handler->getEvents().onCallbackQuery([&](TgBot::CallbackQuery::Ptr query) {
+  handler->getEvents().onCallbackQuery([this](TgBot::CallbackQuery::Ptr query) {
     if (Events) {
       auto user = std::make_shared<User>();
       user->GetDataFrom(query->from);
@@ -93,25 +106,68 @@ void BotAPI::Start() {
         message->SetID(query->inlineMessageId);
         message->SetInline(true);
       }
-      EngineInstance->GetServer()->OnCallback(query->id.data(), message, user,
-                                              query->data.data());
+      Task task = {.Function =
+                       [this, query, user, message]() {
+                         try {
+                           EngineInstance->GetServer()->OnCallback(
+                               query->id.data(), message, user,
+                               query->data.data());
+                         } catch (std::exception& e) {
+                           EngineInstance->GetConsole()
+                               << "TgBotAPI: Some error in server event (maybe "
+                                  "tg api error): "
+                               << e.what() << EndLine;
+                         }
+                       },
+                   .RunNotE = false};
+      EngineInstance->GetTaskManager().AddTask(task);
     }
   });
   handler->getEvents().onChosenInlineResult(
-      [&](TgBot::ChosenInlineResult::Ptr result) {
+      [this](TgBot::ChosenInlineResult::Ptr result) {
         if (Events) {
           auto user = std::make_shared<User>();
           user->GetDataFrom(result->from);
           auto message = std::make_shared<Message>();
           message->SetID(result->inlineMessageId);
           message->SetInline(true);
-          EngineInstance->GetServer()->OnInlineChosen(
-              result->resultId.data(), result->query.data(), user, message);
+
+          Task task = {.Function =
+                           [this, result, user, message]() {
+                             try {
+                               EngineInstance->GetServer()->OnInlineChosen(
+                                   result->resultId.data(),
+                                   result->query.data(), user, message);
+                             } catch (std::exception& e) {
+                               EngineInstance->GetConsole()
+                                   << "TgBotAPI: Some error in server event "
+                                      "(maybe "
+                                      "tg api error): "
+                                   << e.what() << EndLine;
+                             }
+                           },
+                       .RunNotE = false};
+          EngineInstance->GetTaskManager().AddTask(task);
         }
       });
-  handler->getEvents().onAnyMessage([&](TgBot::Message::Ptr message) {
-    if (Events && message->text[0] == '/')
-      EngineInstance->GetServer()->OnCommand(message->text.data());
+  handler->getEvents().onAnyMessage([this](TgBot::Message::Ptr message) {
+    if (Events && !message->text.empty() && message->text[0] == '/' &&
+        message->text.length() > 1) {
+      Task task = {
+          .Function =
+              [this, message]() {
+                try {
+                  EngineInstance->GetServer()->OnCommand(message->text.data());
+                } catch (std::exception& e) {
+                  EngineInstance->GetConsole()
+                      << "TgBotAPI: Some error in server event (maybe "
+                         "tg api error): "
+                      << e.what() << EndLine;
+                }
+              },
+          .RunNotE = false};
+      EngineInstance->GetTaskManager().AddTask(task);
+    }
   });
 }
 void BotAPI::Stop() {
@@ -122,6 +178,9 @@ void BotAPI::Stop() {
 void BotAPI::OnUpdate() {}
 void BotAPI::OnDisabled() {
   if (MessagesThreadHandle.joinable()) MessagesThreadHandle.join();
+  if (Token) delete[] Token;
+  if (WebhookURL) delete[] WebhookURL;
+  if (handler) delete handler;
 }
 
 void BotAPI::SetToken(const char* token) {
@@ -169,34 +228,33 @@ void BotAPI::EditMessage(IMessage* message) {
   if (!message->GetText()) return;
   if (!Token || !Token[0]) return;
   if (!handler) return;
-  if (!((Message*)message)->IsInline()) {
+  Message* msg = dynamic_cast<Message*>(message);
+  if (!msg) return;
+  if (!msg->IsInline()) {
     handler->getApi().editMessageText(
-        message->GetText(), ((Message*)message)->GetChatID(),
-        std::stoll(message->GetID()), "", "", nullptr,
-        ((Message*)message)->GetKeyboard()
-            ? ((Message*)message)->GetKeyboard()->GetKeyboardMarkup()
-            : nullptr);
+        message->GetText(), msg->GetChatID(), std::stoll(message->GetID()), "",
+        "", nullptr,
+        msg->GetKeyboard() ? msg->GetKeyboard()->GetKeyboardMarkup() : nullptr);
   } else {
     handler->getApi().editMessageText(
         message->GetText(), 0, 0, message->GetID(), "", nullptr,
-        ((Message*)message)->GetKeyboard()
-            ? ((Message*)message)->GetKeyboard()->GetKeyboardMarkup()
-            : nullptr);
+        msg->GetKeyboard() ? msg->GetKeyboard()->GetKeyboardMarkup() : nullptr);
   }
 }
 void BotAPI::EditMessageKeyboard(IMessage* message) {
   if (!message) return;
-  if (!((Message*)message)->GetKeyboard()) return;
   if (!Token || !Token[0]) return;
   if (!handler) return;
-  if (!((Message*)message)->IsInline()) {
+  Message* msg = dynamic_cast<Message*>(message);
+  if (!msg) return;
+  if (!msg->GetKeyboard()) return;
+  if (!msg->IsInline()) {
     handler->getApi().editMessageReplyMarkup(
-        ((Message*)message)->GetChatID(), std::stoll(message->GetID()), "",
-        ((Message*)message)->GetKeyboard()->GetKeyboardMarkup());
+        msg->GetChatID(), std::stoll(message->GetID()), "",
+        msg->GetKeyboard()->GetKeyboardMarkup());
   } else {
     handler->getApi().editMessageReplyMarkup(
-        0, 0, message->GetID(),
-        ((Message*)message)->GetKeyboard()->GetKeyboardMarkup());
+        0, 0, message->GetID(), msg->GetKeyboard()->GetKeyboardMarkup());
   }
 }
 void BotAPI::AnswerCallback(const char* queryID, const char* message) {

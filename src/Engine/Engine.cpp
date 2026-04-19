@@ -77,18 +77,18 @@ void Engine::OnUpdate() {
   if (MainWindow) MainWindow->Update();
   std::chrono::steady_clock::time_point startTime;
   std::chrono::steady_clock::time_point endTime;
-  manager.AllowExecOnAdd(false);
+  Manager.AllowExecOnAdd(false);
   startTime = PrepareTick();
   for (uint64_t i = 0; i < Modules.size(); ++i) {
     if (!Modules.contains(i)) continue;
     if (Modules[i].Activated) {
       auto mod = Modules[i].Module;
       Task task = {.Function = [mod]() { mod->OnUpdate(); }, .RunNotE = false};
-      manager.AddTask(task);
+      Manager.AddTask(task);
     }
   }
-  manager.ExecuteAll();
-  manager.WaitForExecution();
+  Manager.ExecuteAll();
+  Manager.WaitForExecution();
   endTime = EndTick();
   DeltaTime = (float)std::chrono::duration_cast<std::chrono::microseconds>(
                   endTime - startTime)

@@ -17,7 +17,7 @@ class Game final {
            std::shared_ptr<AS::Engine::IUser> user);
   void Open(const char* queryID,
             std::shared_ptr<AS::Engine::IMessage> messageId,
-            std::shared_ptr<AS::Engine::IUser> user, char x, char y);
+            std::shared_ptr<AS::Engine::IUser> user, unsigned char x, unsigned char y);
   void Clean(User* user, Field* field);
 
   virtual ~Game() = default;

@@ -9,7 +9,7 @@
 namespace AS::Engine {
 class Message : public IMessage {
  public:
-  Message() {}
+  Message() : KeyboardD(nullptr) {}
 
   virtual void SetText(const char* text) override { Text = std::string(text); }
   virtual const char* GetText() const override { return Text.c_str(); }

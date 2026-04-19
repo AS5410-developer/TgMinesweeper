@@ -9,6 +9,7 @@
 #include <Base/Types.hpp>
 #include <BotAPI/IBotAPI.hpp>
 #include <Engine/IConsole.hpp>
+#include <Engine/ITaskManager.hpp>
 #include <FileSystem/IFileSystem.hpp>
 #include <Launcher/ILauncher.hpp>
 #include <Platform/IPlatform.hpp>
@@ -51,6 +52,7 @@ class ENGINE_EXPORT IEngine : public IModule {
   virtual IFileSystem& GetFileSystem() = 0;
   virtual IServer* GetServer() = 0;
   virtual IBotAPI* GetBotAPI() = 0;
+  virtual ITaskManager& GetTaskManager() = 0;
 
   virtual WindowSize GetWindowSize() const = 0;
   virtual IWindow* GetMainWindow() const = 0;

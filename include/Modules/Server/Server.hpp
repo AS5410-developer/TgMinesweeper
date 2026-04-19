@@ -5,6 +5,7 @@
 #include <Modules/Server/User.hpp>
 #include <Server/IServer.hpp>
 #include <map>
+#include <mutex>
 
 namespace AS::Engine {
 class Server : public IServer {
@@ -36,16 +37,18 @@ class Server : public IServer {
   static Server* GetServer() { return ServerInstance; }
 
   User* FindUser(UID uid) {
+    std::lock_guard<std::recursive_mutex> lock(UserWork);
     if (Users.contains(uid)) return Users[uid];
     return nullptr;
   }
-  void CheckIsNew(IUser* tgUser);
+  void CheckIsNew(std::shared_ptr<IUser> tgUser);
 
   virtual ~Server() = default;
 
  private:
   static IEngine* EngineInstance;
   static Server* ServerInstance;
+  std::recursive_mutex UserWork;
   std::map<UID, User*> Users;
 };
 }  // namespace AS::Engine

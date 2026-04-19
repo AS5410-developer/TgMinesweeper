@@ -62,7 +62,8 @@ const IError* Console::ExecuteCommand(const std::string& command) {
         quote = !quote;
         continue;
       }
-      if (std::isspace(oneCommand[i]) && !quote && !arg.empty()) {
+      if (std::isspace(static_cast<unsigned char>(oneCommand[i])) && !quote &&
+          !arg.empty()) {
         args.push_back(arg);
         arg.clear();
       } else

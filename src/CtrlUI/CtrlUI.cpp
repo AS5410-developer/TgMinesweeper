@@ -45,11 +45,16 @@ void SetDefaultWindowLayout(WINDOW* win, WINDOW* modulesSubwin,
   wmove(win, LINES - 2, 10);
 }
 
-void Handler(const std::string& text) { buffer.append(text); }
+void Handler(const std::string& text) {
+  std::lock_guard<std::mutex> lock(consoleMutex);
+  buffer.append(text);
+}
 
 void Clear(int argc, char** argv) {
+  consoleMutex.lock();
   buffer.clear();
   SetConsoleLayout(consoleSubwin, buffer);
+  consoleMutex.unlock();
   wrefresh(win);
 }
 ConCMD clearCMD("con_clear", Clear, "Clear the console");
@@ -154,9 +159,8 @@ void CtrlUI::UIThreadFunc() {
       delete EngineInstance->GetConsole().ExecuteCommand(commandBuffer);
       wtimeout(win, 100);
     }
-
+    consoleMutex.lock();
     if (buffer.size() != lastBufferSize) {
-      consoleMutex.lock();
       wclear(modulesSubwin);
       SetModulesSubwinLayout(modulesSubwin);
       wrefresh(modulesSubwin);
@@ -164,8 +168,8 @@ void CtrlUI::UIThreadFunc() {
       SetConsoleLayout(consoleSubwin, buffer);
       wrefresh(consoleSubwin);
       lastBufferSize = buffer.size();
-      consoleMutex.unlock();
     }
+    consoleMutex.unlock();
   }
   Destroy();
 }

@@ -18,7 +18,7 @@ class Mutex final : public IMutex {
 
  private:
   void* Resource;
-  std::mutex Mut;
+  std::recursive_mutex Mut;
 };
 }  // namespace AS::Engine
 

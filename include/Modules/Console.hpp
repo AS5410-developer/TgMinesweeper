@@ -11,6 +11,7 @@
 #include <map>
 
 namespace AS::Engine {
+class IEngine;
 
 class ENGINE_EXPORT Console final : public IConsole {
  public:

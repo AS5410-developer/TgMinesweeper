@@ -60,7 +60,10 @@ class BotAPI : public IBotAPI {
 
   static BotAPI* GetInstance() { return Instance; }
 
-  virtual ~BotAPI() = default;
+  virtual ~BotAPI() {
+    if (Token) delete[] Token;
+    if (WebhookURL) delete[] WebhookURL;
+  }
 
  private:
   static IEngine* EngineInstance;
