@@ -23,6 +23,12 @@ class ENGINE_EXPORT Console final : public IConsole {
   virtual void RegisterConVar(IConVar& convar) override;
   virtual void RegisterConCmd(ConCMD& concmd) override;
 
+  virtual std::vector<IConVar*> GetConVars() override;
+  virtual std::vector<ConCMD*> GetConCmds() override;
+
+  virtual void UnregisterConVar(const std::string& convar) override;
+  virtual void UnregisterConCmd(const std::string& concmd) override;
+
   virtual const IError* ExecuteCommand(const std::string& command) override;
   virtual const IError* Execute(const std::string& filePath) override;
 

@@ -1,4 +1,5 @@
 #include <Base/ErrorSuccess.hpp>
+#include <Base/FileSystemError.hpp>
 #include <Modules/Console.hpp>
 #include <format>
 
@@ -29,12 +30,47 @@ void Console::RegisterConVar(IConVar& convar) {
 }
 void Console::RegisterConCmd(ConCMD& concmd) { Concmds[concmd.Name] = &concmd; }
 
+std::vector<IConVar*> Console::GetConVars() {
+  std::vector<IConVar*> convars;
+  for (auto& [unused, convar] : Convars) {
+    convars.push_back(convar);
+  }
+  return convars;
+}
+std::vector<ConCMD*> Console::GetConCmds() {
+  std::vector<ConCMD*> concmds;
+  for (auto& [unused, concmd] : Concmds) {
+    concmds.push_back(concmd);
+  }
+  return concmds;
+}
+
+void Console::UnregisterConVar(const std::string& convar) {
+  if (Convars.contains(convar)) Convars.erase(convar);
+}
+void Console::UnregisterConCmd(const std::string& concmd) {
+  if (Concmds.contains(concmd)) Concmds.erase(concmd);
+}
+
+void Validate(std::string& arg) {
+  // remove spaces
+  int16_t spaces = 0;
+  spaces = arg.find(" ");
+  if (spaces != EOF) do {
+      arg.erase(spaces, 1);
+    } while ((spaces = arg.find(" ", spaces)) != EOF);
+}
+
 const IError* Console::ExecuteCommand(const std::string& command) {
+  // check is empty
   if (command.empty()) return new ErrorSuccess;
 
   unsigned long long pos = 0;
   unsigned long long lastPos = 0;
+
+  // execute all commands in string
   while (command.length() > pos) {
+    // read command
     bool quote = 0;
     lastPos = pos;
     unsigned long long i = pos;
@@ -53,6 +89,7 @@ const IError* Console::ExecuteCommand(const std::string& command) {
       *this << "Syntax error" << EndLine;
       break;
     }
+    // parse & execute
     std::string oneCommand = command.substr(lastPos, i - lastPos);
     std::vector<std::string> args;
     std::string arg;
@@ -64,12 +101,17 @@ const IError* Console::ExecuteCommand(const std::string& command) {
       }
       if (std::isspace(static_cast<unsigned char>(oneCommand[i])) && !quote &&
           !arg.empty()) {
+        Validate(arg);
+        // add
         args.push_back(arg);
         arg.clear();
       } else
         arg += oneCommand[i];
     }
-    if (!arg.empty()) args.push_back(arg);
+    if (!arg.empty()) {
+      Validate(arg);
+      args.push_back(arg);
+    }
 
     if (args.empty()) continue;
 
@@ -97,7 +139,17 @@ const IError* Console::ExecuteCommand(const std::string& command) {
   }
   return new ErrorSuccess;
 }
-const IError* Console::Execute(const std::string& filePath) { return 0; }
+const IError* Console::Execute(const std::string& filePath) {
+  auto file = EngineInstance->GetFileSystem().CreateFile();
+  file->Open(filePath.c_str(),
+             AS_ENGINE_FILE_SYSTEM_GAMEDIR | AS_ENGINE_FILE_SYSTEM_READ);
+  auto result = file->ReadAll();
+  file->Close();
+  delete file;
+  if (result.Failed()) return new ErrorFileSystem(result.What());
+
+  return ExecuteCommand(result.GetResult());
+}
 
 IConsole& Console::operator<<(const std::string& text) {
   Buffer->StartWorkWithRes([&text](void* buffer) {

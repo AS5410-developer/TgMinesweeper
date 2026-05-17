@@ -4,6 +4,8 @@
 #include <thread>
 using namespace AS::Engine;
 
+static Engine* Instance = 0;
+
 Engine::Engine() {}
 
 std::chrono::steady_clock::time_point Engine::PrepareTick() {
@@ -13,7 +15,57 @@ std::chrono::steady_clock::time_point Engine::EndTick() {
   return std::chrono::high_resolution_clock::now();
 }
 
+void Exec(int argc, char** argv) {
+  if (argc < 2) {
+    Instance->GetConsole() << "exec [config]" << EndLine;
+    return;
+  }
+  Instance->GetConsole().Execute(argv[1]);
+  Instance->GetConsole() << "Executed " << argv[1] << EndLine;
+}
+void Echo(int argc, char** argv) {
+  if (argc < 2) {
+    Instance->GetConsole() << "echo [text]" << EndLine;
+    return;
+  }
+  std::string text;
+  for (unsigned int i = 1; i < argc; ++i) {
+    text += argv[i];
+  }
+  Instance->GetConsole() << text << EndLine;
+}
+void Help(int argc, char** argv) {
+  Instance->GetConsole() << "ASEngine for Telegram Bots. Made by AS5410"
+                         << EndLine;
+  auto vars = Instance->GetConsole().GetConVars();
+  auto cmds = Instance->GetConsole().GetConCmds();
+  for (auto& convar : vars) {
+    Instance->GetConsole() << convar->GetName() << " - "
+                           << convar->GetDescription() << EndLine;
+  }
+  for (auto& concmd : cmds) {
+    Instance->GetConsole() << concmd->Name << " - " << concmd->Description
+                           << EndLine;
+  }
+}
+void Alias(int argc, char** argv) {
+  if (argc < 3) {
+    Instance->GetConsole() << "alias <name> \"<command>\"" << EndLine;
+    return;
+  }
+  static ConCMD CMD = {.Name = argv[1], .Func = Echo, .Description = "Alias"};
+  Instance->GetConsole().RegisterConCmd(CMD);
+}
+static ConCMD ExecCMD = {
+    .Name = "exec", .Func = Exec, .Description = "Execute config file (.cfg)"};
+static ConCMD EchoCMD = {
+    .Name = "echo", .Func = Echo, .Description = "Print text to console"};
+static ConCMD HelpCMD = {
+    .Name = "help", .Func = Help, .Description = "Print help"};
+
 void Engine::OnLoaded() {
+  Instance = this;
+
   auto result = LoadModule("./bin/libPlatformSDL3.so");
   if (result.Failed()) {
     QuitOnError(result);
@@ -71,6 +123,10 @@ void Engine::OnLoaded() {
   TicksThread = std::thread(&Engine::OnTick, this);
   ConsoleInstance << "Current engine's address in process virtual memory: "
                   << this << EndLine;
+
+  ConsoleInstance.RegisterConCmd(ExecCMD);
+  ConsoleInstance.RegisterConCmd(EchoCMD);
+  ConsoleInstance.RegisterConCmd(HelpCMD);
 }
 void Engine::OnRegisterOptions() {}
 void Engine::OnUpdate() {

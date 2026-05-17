@@ -72,7 +72,11 @@ void BotAPI::OnLoaded() {
 void BotAPI::Start() {
   if (Runned) return;
   Runned = true;
-  handler->getApi().deleteWebhook(true);
+  try {
+    handler->getApi().deleteWebhook(true);
+  } catch (std::exception& e) {
+    EngineInstance->GetConsole() << "TgBotAPI: " << e.what() << EndLine;
+  }
   MessagesThreadHandle = std::thread(&BotAPI::MessagesThread, this);
   handler->getEvents().onInlineQuery([this](TgBot::InlineQuery::Ptr query) {
     if (Events) {

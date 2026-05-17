@@ -26,6 +26,12 @@ class ENGINE_EXPORT IConsole {
   virtual void RegisterConVar(IConVar& convar) = 0;
   virtual void RegisterConCmd(ConCMD& concmd) = 0;
 
+  virtual std::vector<IConVar*> GetConVars() = 0;
+  virtual std::vector<ConCMD*> GetConCmds() = 0;
+
+  virtual void UnregisterConVar(const std::string& convar) = 0;
+  virtual void UnregisterConCmd(const std::string& concmd) = 0;
+
   virtual const IError* ExecuteCommand(const std::string& command) = 0;
   virtual const IError* Execute(const std::string& filePath) = 0;
 
